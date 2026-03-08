@@ -1,0 +1,66 @@
+{
+  "metadata": {
+    "name": "app-ciudadano",
+    "slug": "app-ciudadano",
+    "scheme": "appciudadano",
+    "androidPackage": "com.sg.ciudadano",
+    "iosBundleIdentifier": "com.sg.ciudadano",
+    "version": "1.0.0",
+    "orientation": "portrait"
+  },
+  "branding": {
+    "appName": "app-ciudadano",
+    "logo": {
+      "kind": "none"
+    }
+  },
+  "theme": {
+    "colorMode": "system",
+    "light": {
+      "primary": "#2D2B27",
+      "secondary": "#81673B",
+      "background": "#D9D9D9",
+      "surface": "#FFFFFF",
+      "text": "#2D2B27",
+      "textMuted": "#81673B",
+      "border": "#81673B",
+      "buttonText": "#FFFFFF",
+      "statusBarStyle": "dark"
+    },
+    "dark": {
+      "primary": "#D87706",
+      "secondary": "#81673B",
+      "background": "#2D2B27",
+      "surface": "#81673B",
+      "text": "#D9D9D9",
+      "textMuted": "#D9D9D9",
+      "border": "#81673B",
+      "buttonText": "#FFFFFF",
+      "statusBarStyle": "light"
+    }
+  },
+  "assets": {
+    "appIcon": "./assets/images/icon.png",
+    "iosIcon": "./assets/expo.icon",
+    "webFavicon": "./assets/images/favicon.png",
+    "androidAdaptiveIcon": {
+      "backgroundColor": "#D9D9D9",
+      "foregroundImage": "./assets/images/android-icon-foreground.png",
+      "backgroundImage": "./assets/images/android-icon-background.png",
+      "monochromeImage": "./assets/images/android-icon-monochrome.png"
+    },
+    "splash": {
+      "image": "./assets/images/splash-icon.png",
+      "darkImage": "./assets/images/splash-icon.png",
+      "backgroundColor": "#D9D9D9",
+      "darkBackgroundColor": "#2D2B27",
+      "imageWidth": 92
+    }
+  },
+  "apiDefaults": {
+    "defaultHeaders": {
+      "Accept": "application/json",
+      "Content-Type": "application/json"
+    }
+  }
+}
