@@ -1,6 +1,6 @@
 import React from 'react';
-import { ScrollView, View, ViewProps } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Platform, ScrollView, View, ViewProps } from 'react-native';
+import { Edge, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAppConfig } from '@/context/AppConfigContext';
 import { useResponsiveMetrics } from '@/utils/Responsive';
@@ -13,14 +13,22 @@ type PageContainerProps = {
 export function PageContainer({ children, scroll = false, style, ...rest }: PageContainerProps) {
   const { activeTheme } = useAppConfig();
   const metrics = useResponsiveMetrics();
+  const insets = useSafeAreaInsets();
+  const isIOS = Platform.OS === 'ios';
+
+  const safeAreaEdges: Edge[] | undefined = isIOS ? ['top', 'left', 'right'] : undefined;
+  const bottomSpacing = isIOS ? insets.bottom + 84 : 0;
 
   if (scroll) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: activeTheme.background }}>
+      <SafeAreaView
+        edges={safeAreaEdges}
+        style={{ flex: 1, backgroundColor: activeTheme.background }}>
         <ScrollView
           contentContainerStyle={{
             paddingHorizontal: metrics.horizontalPadding,
-            paddingVertical: metrics.verticalPadding,
+            paddingTop: metrics.verticalPadding,
+            paddingBottom: metrics.verticalPadding + bottomSpacing,
             gap: metrics.gap,
           }}
           style={{ flex: 1 }}>
@@ -33,13 +41,16 @@ export function PageContainer({ children, scroll = false, style, ...rest }: Page
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: activeTheme.background }}>
+    <SafeAreaView
+      edges={safeAreaEdges}
+      style={{ flex: 1, backgroundColor: activeTheme.background }}>
       <View
         style={[
           {
             flex: 1,
             paddingHorizontal: metrics.horizontalPadding,
-            paddingVertical: metrics.verticalPadding,
+            paddingTop: metrics.verticalPadding,
+            paddingBottom: metrics.verticalPadding + bottomSpacing,
           },
           style,
         ]}
