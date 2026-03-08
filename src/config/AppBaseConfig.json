@@ -39,6 +39,23 @@
       "statusBarStyle": "light"
     }
   },
+  "navigationTabs": {
+    "ios": {
+      "tintColor": "#81673B"
+    },
+    "android": {
+      "activeBackground": "#81673B",
+      "activeForeground": "#FFFFFF",
+      "inactiveBackground": "#FFFFFF",
+      "inactiveForeground": "#64625F"
+    },
+    "web": {
+      "activeBackground": "#81673B",
+      "activeForeground": "#FFFFFF",
+      "inactiveBackground": "#FFFFFF",
+      "inactiveForeground": "#64625F"
+    }
+  },
   "assets": {
     "appIcon": "./assets/images/icon.png",
     "iosIcon": "./assets/expo.icon",

@@ -21,6 +21,24 @@ export type AppTheme = {
   dark: ThemePalette;
 };
 
+export type NavigationTabsConfig = {
+  ios: {
+    tintColor: string;
+  };
+  android: {
+    activeBackground: string;
+    activeForeground: string;
+    inactiveBackground: string;
+    inactiveForeground: string;
+  };
+  web: {
+    activeBackground: string;
+    activeForeground: string;
+    inactiveBackground: string;
+    inactiveForeground: string;
+  };
+};
+
 export type AppApiConfig = {
   baseUrl: string;
   defaultHeaders: Record<string, string>;
@@ -48,5 +66,6 @@ export type BrandingConfig = {
 export type RuntimeAppConfig = {
   api: AppApiConfig;
   theme: AppTheme;
+  tabs: NavigationTabsConfig;
   branding: BrandingConfig;
 };

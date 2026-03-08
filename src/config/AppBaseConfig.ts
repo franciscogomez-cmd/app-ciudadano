@@ -12,6 +12,7 @@ type AppBaseConfig = {
   };
   branding: BrandingConfig;
   theme: RuntimeAppConfig['theme'];
+  navigationTabs: RuntimeAppConfig['tabs'];
   assets: {
     appIcon: string;
     iosIcon: string;
@@ -101,6 +102,17 @@ export const createInitialRuntimeConfig = (): RuntimeAppConfig => ({
     ...runtimeApiConfig,
     defaultHeaders: {
       ...runtimeApiConfig.defaultHeaders,
+    },
+  },
+  tabs: {
+    ios: {
+      ...appBaseConfig.navigationTabs.ios,
+    },
+    android: {
+      ...appBaseConfig.navigationTabs.android,
+    },
+    web: {
+      ...appBaseConfig.navigationTabs.web,
     },
   },
   theme: {
