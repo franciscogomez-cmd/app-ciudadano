@@ -7,6 +7,7 @@ import {
   NativeSyntheticEvent,
   Pressable,
   Text,
+  TouchableOpacity,
   View,
   useWindowDimensions,
 } from "react-native";
@@ -47,11 +48,9 @@ function OnboardingProgress({
   return (
     <View
       style={{
-        flex: 1,
         height: 7,
         borderRadius: 13,
         backgroundColor: "#D6CCBF",
-        marginHorizontal: 14,
       }}
     >
       <View
@@ -156,7 +155,7 @@ export function OnboardingPage() {
               color: "#FFFFFF",
               fontFamily: AlertsFontFamily.medium,
               fontSize: 14,
-              lineHeight: 14,
+              lineHeight: 20,
             }}
           >
             Mantente informado sobre riesgos o emergencias cerca de tu ubicacion
@@ -204,7 +203,7 @@ export function OnboardingPage() {
               color: "#FFFFFF",
               fontFamily: AlertsFontFamily.medium,
               fontSize: 14,
-              lineHeight: 14,
+              lineHeight: 20,
             }}
           >
             Para recibir alertas, ingresa tu codigo postal o activa tu GPS.
@@ -242,7 +241,7 @@ export function OnboardingPage() {
               color: "#FFFFFF",
               fontFamily: AlertsFontFamily.medium,
               fontSize: 14,
-              lineHeight: 14,
+              lineHeight: 20,
             }}
           >
             Activa las notificaciones para recibir alertas cuando ocurra una
@@ -261,7 +260,7 @@ export function OnboardingPage() {
               color: "#FFFFFF",
               fontFamily: AlertsFontFamily.medium,
               fontSize: 14,
-              lineHeight: 14,
+              lineHeight: 20,
             }}
           >
             Activa las notificaciones para recibir alertas cuando ocurra una
@@ -348,30 +347,33 @@ export function OnboardingPage() {
                 <View style={{ marginBottom: 40 }}>{item.body}</View>
 
                 {item.ctaLabel ? (
-                  <Pressable
+                  <TouchableOpacity
                     accessibilityRole="button"
+                    activeOpacity={0.85}
                     onPress={() => router.replace(item.route ?? "/alertas")}
-                    style={({ pressed }) => ({
-                      minHeight: 32,
-                      borderRadius: 10,
-                      backgroundColor: palette.actionBackground,
+                    style={{
+                      width: "100%",
+                      borderRadius: 8,
+                      backgroundColor: "#2D2B27",
                       justifyContent: "center",
                       alignItems: "center",
-                      opacity: pressed ? 0.88 : 1,
-                      paddingVertical: 8,
+                      paddingVertical: 14,
+                      paddingHorizontal: 12,
                       marginBottom: 24,
-                    })}
+                      overflow: "hidden",
+                    }}
                   >
                     <Text
                       style={{
-                        color: palette.actionText,
+                        color: "#FFFFFF",
                         fontFamily: AlertsFontFamily.bold,
-                        fontSize: 15,
+                        fontSize: 14,
+                        lineHeight: 18,
                       }}
                     >
                       {item.ctaLabel}
                     </Text>
-                  </Pressable>
+                  </TouchableOpacity>
                 ) : null}
 
                 <OnboardingProgress
@@ -384,7 +386,7 @@ export function OnboardingPage() {
                     flexDirection: "row",
                     alignItems: "center",
                     justifyContent: "space-between",
-                    marginTop: 30,
+                    marginTop: 20,
                   }}
                 >
                   <OnboardingArrowButton
