@@ -1,4 +1,3 @@
-import { Ionicons } from "@expo/vector-icons";
 import { Href, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useMemo, useRef, useState } from "react";
@@ -7,24 +6,31 @@ import {
   NativeScrollEvent,
   NativeSyntheticEvent,
   Pressable,
-  ScrollView,
   Text,
   View,
   useWindowDimensions,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import Svg, { Circle, Path } from "react-native-svg";
 
 import {
   AlertHeroIcon,
   AlertNoticeCard,
   AlertSeverityItem,
   AlertsFontFamily,
-  AlertsIconName,
   useAlertsPalette,
 } from "@/components/alerts/AlertsUi";
+import {
+  ActivaNotificacionesIcon,
+  AlertasIcon,
+  GpsIcon,
+  HistorialAlertasIcon,
+  NivelesSeguridadIcon,
+  NotificacionesIcon,
+} from "@/components/icons";
 
 type OnboardingSlide = {
-  icon: AlertsIconName;
+  renderIcon: (size: number) => React.ReactNode;
   title: string;
   route?: Href;
   body: React.ReactNode;
@@ -38,59 +44,91 @@ function OnboardingProgress({
   total: number;
   activeIndex: number;
 }) {
-  const palette = useAlertsPalette();
-
   return (
     <View
-      style={{ flexDirection: "row", flex: 1, gap: 6, marginHorizontal: 14 }}
+      style={{
+        flex: 1,
+        height: 7,
+        borderRadius: 13,
+        backgroundColor: "#D6CCBF",
+        marginHorizontal: 14,
+      }}
     >
-      {Array.from({ length: total }).map((_, index) => (
-        <View
-          key={`onboarding-progress-${index}`}
-          style={{
-            flex: 1,
-            height: 6,
-            borderRadius: 999,
-            backgroundColor:
-              index === activeIndex
-                ? palette.progressActive
-                : palette.progressInactive,
-          }}
-        />
-      ))}
+      <View
+        style={{
+          position: "absolute",
+          left: 0,
+          width: `${((activeIndex + 1) / total) * 100}%`,
+          height: 7,
+          borderRadius: 13,
+          backgroundColor: "#FFFFFF",
+        }}
+      />
     </View>
   );
 }
 
 function OnboardingArrowButton({
   direction,
-  disabled,
+  hidden,
   onPress,
 }: {
   direction: "back" | "forward";
-  disabled?: boolean;
+  hidden?: boolean;
   onPress: () => void;
 }) {
+  if (hidden) {
+    return <View style={{ width: 26, height: 26 }} />;
+  }
+
   return (
     <Pressable
       accessibilityRole="button"
-      disabled={disabled}
       onPress={onPress}
       style={({ pressed }) => ({
-        width: 38,
-        height: 38,
-        borderRadius: 19,
-        justifyContent: "center",
-        alignItems: "center",
-        backgroundColor: "#FFFFFF",
-        opacity: disabled ? 0.35 : pressed ? 0.82 : 1,
+        width: 26,
+        height: 26,
+        opacity: pressed ? 0.7 : 1,
       })}
     >
-      <Ionicons
-        name={direction === "back" ? "arrow-back" : "arrow-forward"}
-        size={22}
-        color="#A88B69"
-      />
+      <Svg width={26} height={26} viewBox="0 0 26 26" fill="none">
+        <Circle cx={13} cy={13} r={13} fill="white" />
+        {direction === "forward" ? (
+          <>
+            <Path
+              d="M7.1665 13H18.8332"
+              stroke="#C5B099"
+              strokeWidth={2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <Path
+              d="M13 7.1665L18.8333 12.9998L13 18.8332"
+              stroke="#C5B099"
+              strokeWidth={2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </>
+        ) : (
+          <>
+            <Path
+              d="M18.8335 13L7.16683 13"
+              stroke="#C5B099"
+              strokeWidth={2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <Path
+              d="M13 18.8335L7.16667 13.0002L13 7.16683"
+              stroke="#C5B099"
+              strokeWidth={2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </>
+        )}
+      </Svg>
     </Pressable>
   );
 }
@@ -103,12 +141,14 @@ export function OnboardingPage() {
   const insets = useSafeAreaInsets();
   const [activeIndex, setActiveIndex] = useState(0);
   const slideWidth = width;
-  const heroSize = Math.min(width * 0.55, 280);
+  const heroSize = Math.min(width * 0.65, 300);
+
+  const iconSize = heroSize * 0.64;
 
   const slides = useMemo<OnboardingSlide[]>(
     () => [
       {
-        icon: "alarm-light-outline",
+        renderIcon: (s: number) => <AlertasIcon size={s} />,
         title: "Alertas",
         body: (
           <Text
@@ -116,7 +156,7 @@ export function OnboardingPage() {
               color: "#FFFFFF",
               fontFamily: AlertsFontFamily.medium,
               fontSize: 14,
-              lineHeight: 16,
+              lineHeight: 14,
             }}
           >
             Mantente informado sobre riesgos o emergencias cerca de tu ubicacion
@@ -127,7 +167,7 @@ export function OnboardingPage() {
         ),
       },
       {
-        icon: "chart-bar",
+        renderIcon: (s: number) => <NivelesSeguridadIcon size={s} />,
         title: "Niveles de seguridad",
         body: (
           <View style={{ gap: 10 }}>
@@ -156,7 +196,7 @@ export function OnboardingPage() {
         ),
       },
       {
-        icon: "map-marker-outline",
+        renderIcon: (s: number) => <GpsIcon size={s} />,
         title: "GPS",
         body: (
           <Text
@@ -164,7 +204,7 @@ export function OnboardingPage() {
               color: "#FFFFFF",
               fontFamily: AlertsFontFamily.medium,
               fontSize: 14,
-              lineHeight: 16,
+              lineHeight: 14,
             }}
           >
             Para recibir alertas, ingresa tu codigo postal o activa tu GPS.
@@ -172,7 +212,7 @@ export function OnboardingPage() {
         ),
       },
       {
-        icon: "bell-badge-outline",
+        renderIcon: (s: number) => <NotificacionesIcon size={s} />,
         title: "Notificaciones",
         body: (
           <View style={{ gap: 14 }}>
@@ -194,7 +234,7 @@ export function OnboardingPage() {
         ),
       },
       {
-        icon: "bell-ring-outline",
+        renderIcon: (s: number) => <ActivaNotificacionesIcon size={s} />,
         title: "Activa notificaciones",
         body: (
           <Text
@@ -202,7 +242,7 @@ export function OnboardingPage() {
               color: "#FFFFFF",
               fontFamily: AlertsFontFamily.medium,
               fontSize: 14,
-              lineHeight: 16,
+              lineHeight: 14,
             }}
           >
             Activa las notificaciones para recibir alertas cuando ocurra una
@@ -211,7 +251,7 @@ export function OnboardingPage() {
         ),
       },
       {
-        icon: "file-clock-outline",
+        renderIcon: (s: number) => <HistorialAlertasIcon size={s} />,
         title: "Historial de alertas",
         route: "/alertas",
         ctaLabel: "Iniciar",
@@ -221,7 +261,7 @@ export function OnboardingPage() {
               color: "#FFFFFF",
               fontFamily: AlertsFontFamily.medium,
               fontSize: 14,
-              lineHeight: 16,
+              lineHeight: 14,
             }}
           >
             Activa las notificaciones para recibir alertas cuando ocurra una
@@ -261,20 +301,6 @@ export function OnboardingPage() {
         keyExtractor={(item) => item.title}
         onMomentumScrollEnd={handleMomentumEnd}
         renderItem={({ item, index }) => {
-          const panelHeight = height * 0.42;
-          const navBarHeight = 52;
-          const titleHeight = 44;
-          const ctaHeight = item.ctaLabel ? 52 : 0;
-          const panelPaddingV = 28 + Math.max(insets.bottom, 16);
-          const gapTotal = 12 * (item.ctaLabel ? 3 : 2);
-          const bodyMaxHeight =
-            panelHeight -
-            panelPaddingV -
-            titleHeight -
-            navBarHeight -
-            ctaHeight -
-            gapTotal;
-
           return (
             <View
               style={{
@@ -291,39 +317,35 @@ export function OnboardingPage() {
                   paddingTop: insets.top,
                 }}
               >
-                <AlertHeroIcon icon={item.icon} size={heroSize} />
+                <AlertHeroIcon size={heroSize}>
+                  {item.renderIcon(iconSize)}
+                </AlertHeroIcon>
               </View>
 
               <View
                 style={{
                   width: slideWidth,
-                  height: panelHeight,
-                  backgroundColor: palette.panelBackground,
+                  backgroundColor: "#C5B099",
                   borderTopLeftRadius: 52,
                   borderTopRightRadius: 52,
                   paddingHorizontal: 24,
-                  paddingTop: 28,
+                  paddingTop: 32,
                   paddingBottom: Math.max(insets.bottom, 16),
-                  gap: 12,
                 }}
               >
                 <Text
                   style={{
-                    color: palette.panelText,
+                    color: "#60595D",
                     fontFamily: AlertsFontFamily.bold,
                     fontSize: 30,
-                    lineHeight: 36,
+                    lineHeight: 28,
+                    marginBottom: 40,
                   }}
                 >
                   {item.title}
                 </Text>
 
-                <ScrollView
-                  style={{ maxHeight: bodyMaxHeight }}
-                  showsVerticalScrollIndicator={false}
-                >
-                  {item.body}
-                </ScrollView>
+                <View style={{ marginBottom: 40 }}>{item.body}</View>
 
                 {item.ctaLabel ? (
                   <Pressable
@@ -337,6 +359,7 @@ export function OnboardingPage() {
                       alignItems: "center",
                       opacity: pressed ? 0.88 : 1,
                       paddingVertical: 8,
+                      marginBottom: 24,
                     })}
                   >
                     <Text
@@ -351,26 +374,27 @@ export function OnboardingPage() {
                   </Pressable>
                 ) : null}
 
+                <OnboardingProgress
+                  total={slides.length}
+                  activeIndex={activeIndex}
+                />
+
                 <View
                   style={{
                     flexDirection: "row",
                     alignItems: "center",
-                    marginTop: "auto",
+                    justifyContent: "space-between",
+                    marginTop: 30,
                   }}
                 >
                   <OnboardingArrowButton
                     direction="back"
-                    disabled={index === 0}
+                    hidden={index === 0}
                     onPress={() => {
                       if (index > 0) {
                         goToIndex(index - 1);
                       }
                     }}
-                  />
-
-                  <OnboardingProgress
-                    total={slides.length}
-                    activeIndex={activeIndex}
                   />
 
                   <OnboardingArrowButton
