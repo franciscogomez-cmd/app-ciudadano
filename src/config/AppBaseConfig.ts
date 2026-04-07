@@ -1,4 +1,4 @@
-import { AppApiConfig, BrandingConfig, RuntimeAppConfig } from '@/types/AppConfig';
+import { AlertsModulePalette, AppApiConfig, BrandingConfig, RuntimeAppConfig } from '@/types/AppConfig';
 
 type AppBaseConfig = {
   metadata: {
@@ -33,6 +33,9 @@ type AppBaseConfig = {
   };
   apiDefaults: {
     defaultHeaders: Record<string, string>;
+  };
+  modules: {
+    alerts: AlertsModulePalette;
   };
 };
 
@@ -125,4 +128,15 @@ export const createInitialRuntimeConfig = (): RuntimeAppConfig => ({
     },
   },
   branding: createBrandingConfig(),
+  modules: {
+    alerts: {
+      ...appBaseConfig.modules.alerts,
+      severity: {
+        ...appBaseConfig.modules.alerts.severity,
+      },
+      map: {
+        ...appBaseConfig.modules.alerts.map,
+      },
+    },
+  },
 });

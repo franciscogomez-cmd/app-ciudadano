@@ -15,6 +15,33 @@ export type ThemePalette = {
   statusBarStyle: StatusBarStyle;
 };
 
+export type AlertsModulePalette = {
+  shellBackground: string;
+  panelBackground: string;
+  panelText: string;
+  progressActive: string;
+  progressInactive: string;
+  circleStart: string;
+  circleEnd: string;
+  circleGlow: string;
+  actionBackground: string;
+  actionText: string;
+  tileIcon: string;
+  tileText: string;
+  severity: {
+    preventive: string;
+    emergency: string;
+    informative: string;
+  };
+  switchActive: string;
+  switchInactive: string;
+  map: {
+    primary: string;
+    secondary: string;
+    marker: string;
+  };
+};
+
 export type AppTheme = {
   colorMode: ColorMode;
   light: ThemePalette;
@@ -68,4 +95,7 @@ export type RuntimeAppConfig = {
   theme: AppTheme;
   tabs: NavigationTabsConfig;
   branding: BrandingConfig;
+  modules: {
+    alerts: AlertsModulePalette;
+  };
 };

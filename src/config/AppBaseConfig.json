@@ -79,5 +79,33 @@
       "Accept": "application/json",
       "Content-Type": "application/json"
     }
+  },
+  "modules": {
+    "alerts": {
+      "shellBackground": "#C5B099",
+      "panelBackground": "#C5B099",
+      "panelText": "#60595D",
+      "progressActive": "#FFFFFF",
+      "progressInactive": "#DACEC0",
+      "circleStart": "#92272C",
+      "circleEnd": "#BD6236",
+      "circleGlow": "#CDB19C",
+      "actionBackground": "#2D2B27",
+      "actionText": "#FFFFFF",
+      "tileIcon": "#79142A",
+      "tileText": "#60595D",
+      "severity": {
+        "preventive": "#F7C933",
+        "emergency": "#E01D24",
+        "informative": "#188BD1"
+      },
+      "switchActive": "#63B32E",
+      "switchInactive": "#E3E1DE",
+      "map": {
+        "primary": "#6C99F0",
+        "secondary": "#8CB0F6",
+        "marker": "#E01D24"
+      }
+    }
   }
 }
