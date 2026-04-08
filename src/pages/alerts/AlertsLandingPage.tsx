@@ -1,52 +1,61 @@
-import React from 'react';
-import { Href, useRouter } from 'expo-router';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { Pressable, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { StatusBar } from 'expo-status-bar';
+import { Href, useRouter } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import React from "react";
+import { Image, Pressable, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { AlertsFontFamily, AlertsIconName, useAlertsPalette } from '@/components/alerts/AlertsUi';
+import { AlertsFontFamily } from "@/components/alerts/AlertsUi";
+import {
+  HistorialAlertasIcon,
+  NivelesSeguridadIcon,
+  NotificacionesIcon,
+  UltimasNoticiasIcon,
+} from "@/components/icons";
 
 type AlertFeatureCardProps = {
-  icon: AlertsIconName;
+  icon: React.ReactNode;
   label: string;
   route: Href;
 };
 
 function AlertFeatureCard({ icon, label, route }: AlertFeatureCardProps) {
   const router = useRouter();
-  const palette = useAlertsPalette();
 
   return (
-    <Pressable
-      accessibilityRole="button"
-      onPress={() => router.push(route)}
-      style={({ pressed }) => ({
+    // Shadow must live on a plain View — Pressable with function-style `style`
+    // doesn't merge className-derived backgroundColor into the layer,
+    // so iOS won't render the shadow. Outer View owns the shadow,
+    // inner Pressable owns overflow-hidden for rounded clipping.
+    <View
+      style={{
         flex: 1,
-        minHeight: 198,
-        borderRadius: 18,
-        backgroundColor: '#FFFFFF',
-        justifyContent: 'center',
-        alignItems: 'center',
-        gap: 18,
-        shadowColor: '#9B9D9A',
-        shadowOpacity: 0.2,
-        shadowRadius: 14,
-        shadowOffset: { width: 0, height: 8 },
+        height: 149,
+        borderRadius: 12,
+        backgroundColor: "white",
+        shadowColor: "#000000",
+        shadowOpacity: 0.22,
+        shadowRadius: 4,
+        shadowOffset: { width: 0, height: 2 },
         elevation: 5,
-        opacity: pressed ? 0.92 : 1,
-      })}>
-      <MaterialCommunityIcons name={icon} size={82} color={palette.tileIcon} />
-      <Text
-        style={{
-          color: palette.tileText,
-          fontFamily: AlertsFontFamily.bold,
-          fontSize: 18,
-          textAlign: 'center',
-        }}>
-        {label}
-      </Text>
-    </Pressable>
+      }}
+    >
+      <Pressable
+        accessibilityRole="button"
+        onPress={() => router.push(route)}
+        className="h-[149px] rounded-[12px] bg-white items-center justify-center gap-3 overflow-hidden"
+        style={({ pressed }) => ({ opacity: pressed ? 0.9 : 1, flex: 1 })}
+      >
+        <View className="w-[72px] h-[72px] items-center justify-center">
+          {icon}
+        </View>
+        <Text
+          className="text-[12px] leading-[20px] text-[#5E595D] text-center"
+          style={{ fontFamily: AlertsFontFamily.medium }}
+        >
+          {label}
+        </Text>
+      </Pressable>
+    </View>
   );
 }
 
@@ -57,31 +66,25 @@ function AlertActionButton({
   label: string;
   onPress?: () => void;
 }) {
-  const palette = useAlertsPalette();
-
   return (
     <Pressable
       accessibilityRole="button"
       onPress={onPress}
+      className="h-[58px] rounded-[14px] bg-[#2D2B27] items-center justify-center"
       style={({ pressed }) => ({
-        minHeight: 64,
-        borderRadius: 16,
-        backgroundColor: palette.actionBackground,
-        justifyContent: 'center',
-        alignItems: 'center',
-        shadowColor: '#000000',
-        shadowOpacity: 0.22,
-        shadowRadius: 10,
-        shadowOffset: { width: 0, height: 5 },
+        opacity: pressed ? 0.88 : 1,
+        // shadows cannot be expressed in NativeWind/Tailwind
+        shadowColor: "#000000",
+        shadowOpacity: 0.28,
+        shadowRadius: 8,
+        shadowOffset: { width: 0, height: 4 },
         elevation: 6,
-        opacity: pressed ? 0.9 : 1,
-      })}>
+      })}
+    >
       <Text
-        style={{
-          color: palette.actionText,
-          fontFamily: AlertsFontFamily.bold,
-          fontSize: 17,
-        }}>
+        className="text-white text-[16px] leading-[20px]"
+        style={{ fontFamily: AlertsFontFamily.bold }}
+      >
         {label}
       </Text>
     </Pressable>
@@ -90,138 +93,98 @@ function AlertActionButton({
 
 export function AlertsLandingPage() {
   const router = useRouter();
-  const palette = useAlertsPalette();
+  const insets = useSafeAreaInsets();
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: palette.shellBackground }}>
+    <View className="flex-1 bg-[#C5B099]">
       <StatusBar style="light" />
 
-      <View style={{ flex: 1, backgroundColor: palette.shellBackground }}>
+      {/* Header */}
+      <View
+        className="flex-row items-center justify-between px-6 pb-5"
+        style={{ paddingTop: insets.top + 8 }}
+      >
+        <Text
+          className="text-white text-[42px]"
+          style={{ fontFamily: AlertsFontFamily.bold, lineHeight: 44 }}
+        >
+          Alertas
+        </Text>
+
+        <Image
+          source={require("../../../assets/images/logo.png")}
+          style={{ width: 170, height: 50 }}
+          resizeMode="contain"
+        />
+      </View>
+
+      {/* Main white card */}
+      <View className="flex-1 bg-white rounded-[52px] mb-16 overflow-hidden">
         <View
+          className="flex-1 justify-center"
           style={{
-            paddingHorizontal: 18,
-            paddingTop: 12,
-            paddingBottom: 18,
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}>
-          <Text
-            style={{
-              color: '#FFFFFF',
-              fontFamily: AlertsFontFamily.bold,
-              fontSize: 42,
-              lineHeight: 42,
-            }}>
-            Alertas
-          </Text>
-
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-            <View
-              style={{
-                width: 42,
-                height: 42,
-                borderRadius: 12,
-                backgroundColor: '#F1E952',
-                justifyContent: 'center',
-                alignItems: 'center',
-              }}>
-              <Ionicons name="shield-checkmark" size={24} color="#417543" />
-            </View>
-
-            <View>
-              <Text
-                style={{
-                  color: palette.tileIcon,
-                  fontFamily: AlertsFontFamily.bold,
-                  fontSize: 28,
-                  lineHeight: 28,
-                }}>
-                Nayarit
-              </Text>
-              <Text
-                style={{
-                  color: palette.tileIcon,
-                  fontFamily: AlertsFontFamily.medium,
-                  fontSize: 10,
-                }}>
-                NUESTRA PASION Y COMPROMISO
-              </Text>
-            </View>
-          </View>
-        </View>
-
-        <View
-          style={{
-            flex: 1,
-            backgroundColor: '#FFFFFF',
-            borderTopLeftRadius: 52,
-            borderTopRightRadius: 52,
-            paddingHorizontal: 18,
-            paddingTop: 24,
-            paddingBottom: 24,
-            gap: 18,
-          }}>
-          <View style={{ flexDirection: 'row', gap: 18 }}>
+            padding: 24,
+            gap: 16,
+            paddingBottom: Math.max(insets.bottom + 24, 48),
+          }}
+        >
+          {/* Row 1 */}
+          <View className="flex-row gap-4">
             <AlertFeatureCard
-              icon="file-clock-outline"
+              icon={<HistorialAlertasIcon size={60} color="#79142A" />}
               label="Historial de alertas"
               route="/alertas/historial"
             />
             <AlertFeatureCard
-              icon="bell-badge-outline"
+              icon={<NotificacionesIcon size={60} color="#79142A" />}
               label="Notificaciones"
               route="/alertas/notificaciones"
             />
           </View>
 
-          <View style={{ flexDirection: 'row', gap: 18 }}>
+          {/* Row 2 */}
+          <View className="flex-row gap-4">
             <AlertFeatureCard
-              icon="chart-bar"
+              icon={<NivelesSeguridadIcon size={60} color="#79142A" />}
               label="Niveles de severidad"
               route="/alertas/niveles"
             />
             <AlertFeatureCard
-              icon="bullhorn-outline"
-              label="Ultimas noticias"
+              icon={<UltimasNoticiasIcon size={60} color="#79142A" />}
+              label="Últimas noticias"
               route="/alertas/noticias"
             />
           </View>
 
+          {/* GPS card */}
           <View
+            className="rounded-[12px] bg-white px-[18px] py-[18px] gap-[14px]"
             style={{
-              marginTop: 18,
-              borderRadius: 20,
-              backgroundColor: '#FFFFFF',
-              borderWidth: 1,
-              borderColor: '#F0E6DB',
-              paddingHorizontal: 18,
-              paddingVertical: 18,
-              gap: 18,
-              shadowColor: '#9B9D9A',
-              shadowOpacity: 0.16,
-              shadowRadius: 12,
-              shadowOffset: { width: 0, height: 6 },
-              elevation: 4,
-            }}>
+              shadowColor: "#000000",
+              shadowOpacity: 0.22,
+              shadowRadius: 4,
+              shadowOffset: { width: 0, height: 2 },
+              elevation: 5,
+            }}
+          >
             <Text
-              style={{
-                color: palette.tileText,
-                fontFamily: AlertsFontFamily.bold,
-                fontSize: 20,
-                lineHeight: 28,
-              }}>
-              Para recibir alertas, ingresa tu codigo postal o activa tu GPS.
+              className="text-[15px] leading-[22px] text-[#60595D]"
+              style={{ fontFamily: AlertsFontFamily.medium }}
+            >
+              Para recibir alertas, ingresa tu código postal o activa tu GPS.
             </Text>
 
             <AlertActionButton
-              label="Usar codigo postal"
-              onPress={() => router.push('/alertas/incidente')}
+              label="Usar código postal"
+              onPress={() => router.push("/alertas/incidente")}
             />
-            <AlertActionButton label="Activar GPS" onPress={() => router.push('/alertas/incidente')} />
+            <AlertActionButton
+              label="Activar GPS"
+              onPress={() => router.push("/alertas/incidente")}
+            />
           </View>
         </View>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
