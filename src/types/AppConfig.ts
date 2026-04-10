@@ -1,7 +1,7 @@
-import { ImageSourcePropType } from 'react-native';
+import { ImageSourcePropType } from "react-native";
 
-export type StatusBarStyle = 'light' | 'dark';
-export type ColorMode = 'system' | 'light' | 'dark';
+export type StatusBarStyle = "light" | "dark";
+export type ColorMode = "system" | "light" | "dark";
 
 export type ThemePalette = {
   primary: string;
@@ -15,7 +15,13 @@ export type ThemePalette = {
   statusBarStyle: StatusBarStyle;
 };
 
-export type AlertsModulePalette = {
+export type AlertSeverityPalette = {
+  preventive: string;
+  emergency: string;
+  informative: string;
+};
+
+export type AlertsModuleModePalette = {
   shellBackground: string;
   panelBackground: string;
   panelText: string;
@@ -28,11 +34,18 @@ export type AlertsModulePalette = {
   actionText: string;
   tileIcon: string;
   tileText: string;
-  severity: {
-    preventive: string;
-    emergency: string;
-    informative: string;
-  };
+  cardBackground: string;
+  cardBorder: string;
+  subtleText: string;
+  iconOnAccent: string;
+  shadowColor: string;
+  shadowAccent: string;
+  historyBadgeOuter: string;
+  historyActionIcon: string;
+  mapBackground: string;
+  mapRoad: string;
+  severity: AlertSeverityPalette;
+  severityText: AlertSeverityPalette;
   switchActive: string;
   switchInactive: string;
   map: {
@@ -40,6 +53,11 @@ export type AlertsModulePalette = {
     secondary: string;
     marker: string;
   };
+};
+
+export type AlertsModulePalette = {
+  light: AlertsModuleModePalette;
+  dark: AlertsModuleModePalette;
 };
 
 export type AppTheme = {
@@ -73,15 +91,15 @@ export type AppApiConfig = {
 
 export type BrandingAsset =
   | {
-      kind: 'none';
+      kind: "none";
     }
   | {
-      kind: 'local';
-      key: 'default' | 'glow';
+      kind: "local";
+      key: "default" | "glow";
       source?: ImageSourcePropType;
     }
   | {
-      kind: 'remote';
+      kind: "remote";
       uri: string;
     };
 

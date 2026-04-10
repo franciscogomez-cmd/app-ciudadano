@@ -1,17 +1,19 @@
-import { Stack } from 'expo-router';
-import React from 'react';
+import { Stack } from "expo-router";
+import React from "react";
 
-import { useAppConfig } from '@/context/AppConfigContext';
+import { useAlertsPalette } from "@/components/alerts/AlertsUi";
+import { useAppConfig } from "@/context/AppConfigContext";
 
 export default function AlertsLayout() {
-  const { config } = useAppConfig();
+  const { activeTheme } = useAppConfig();
+  const palette = useAlertsPalette();
 
   return (
     <Stack
       screenOptions={{
         headerShown: false,
         contentStyle: {
-          backgroundColor: config.modules.alerts.shellBackground,
+          backgroundColor: palette.shellBackground ?? activeTheme.background,
         },
       }}
     />

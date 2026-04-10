@@ -3,10 +3,10 @@ import Svg, { Path } from "react-native-svg";
 
 export function UltimasNoticiasIcon({
   size = 72,
-  color = "#79142A",
+  color,
 }: {
   size?: number;
-  color?: string;
+  color: string;
 }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 72 72" fill="none">

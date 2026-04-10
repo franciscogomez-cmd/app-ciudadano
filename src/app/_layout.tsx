@@ -1,14 +1,29 @@
-import '@/Global.css';
+import "@/Global.css";
 
-import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import React from 'react';
+import { useFonts } from "expo-font";
+import { Stack } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import * as SystemUI from "expo-system-ui";
+import { useColorScheme as useNativeWindColorScheme } from "nativewind";
+import React, { useEffect } from "react";
 
-import { AppConfigProvider, useAppConfig } from '@/context/AppConfigContext';
+import { AppConfigProvider, useAppConfig } from "@/context/AppConfigContext";
 
 function RootNavigator() {
-  const { activeTheme } = useAppConfig();
+  const { activeTheme, config, resolvedColorMode } = useAppConfig();
+  const { setColorScheme } = useNativeWindColorScheme();
+
+  useEffect(() => {
+    setColorScheme(
+      config.theme.colorMode === "system"
+        ? resolvedColorMode
+        : config.theme.colorMode,
+    );
+  }, [config.theme.colorMode, resolvedColorMode, setColorScheme]);
+
+  useEffect(() => {
+    void SystemUI.setBackgroundColorAsync(activeTheme.background);
+  }, [activeTheme.background]);
 
   return (
     <>
@@ -19,7 +34,8 @@ function RootNavigator() {
           contentStyle: {
             backgroundColor: activeTheme.background,
           },
-        }}>
+        }}
+      >
         <Stack.Screen name="index" />
         <Stack.Screen name="alertas" />
       </Stack>
@@ -29,9 +45,9 @@ function RootNavigator() {
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
-    'Ubuntu-Regular': require('../../assets/fonts/Ubuntu-R.ttf'),
-    'Ubuntu-Medium': require('../../assets/fonts/Ubuntu-M.ttf'),
-    'Ubuntu-Bold': require('../../assets/fonts/Ubuntu-B.ttf'),
+    "Ubuntu-Regular": require("../../assets/fonts/Ubuntu-R.ttf"),
+    "Ubuntu-Medium": require("../../assets/fonts/Ubuntu-M.ttf"),
+    "Ubuntu-Bold": require("../../assets/fonts/Ubuntu-B.ttf"),
   });
 
   if (!fontsLoaded) {

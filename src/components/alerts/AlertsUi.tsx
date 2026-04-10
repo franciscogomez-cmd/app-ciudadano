@@ -2,16 +2,16 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { Href, useRouter } from "expo-router";
 import React from "react";
 import {
-    Pressable,
-    ScrollView,
-    Switch,
-    Text,
-    View,
-    useWindowDimensions,
+  Pressable,
+  ScrollView,
+  Switch,
+  Text,
+  View,
+  useWindowDimensions,
 } from "react-native";
 import {
-    SafeAreaView,
-    useSafeAreaInsets,
+  SafeAreaView,
+  useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import Svg, { Circle, Defs, RadialGradient, Stop } from "react-native-svg";
 
@@ -57,18 +57,23 @@ type AlertNoticeCardProps = {
   color: string;
   titleColor?: string;
   descriptionColor?: string;
+  icon?: React.ReactNode;
 };
 
 export function useAlertsPalette() {
-  const { config, activeTheme } = useAppConfig();
+  const { config, activeTheme, resolvedColorMode } = useAppConfig();
+  const alerts = config.modules.alerts[resolvedColorMode];
 
   return {
-    ...config.modules.alerts,
+    background: activeTheme.background,
+    primary: activeTheme.primary,
     surface: activeTheme.surface,
     text: activeTheme.text,
+    textMuted: activeTheme.textMuted,
     border: activeTheme.border,
     secondary: activeTheme.secondary,
     buttonText: activeTheme.buttonText,
+    ...alerts,
   };
 }
 
@@ -98,40 +103,33 @@ export function AlertScreenScaffold({
 
   const content = (
     <View
+      className="flex-1 gap-4 px-5 pt-3"
       style={{
         flexGrow: 1,
         paddingHorizontal: horizontalPadding,
-        paddingTop: 12,
         paddingBottom: bottomPadding,
-        gap: 16,
       }}
     >
       {(showBackButton || title) && (
-        <View
-          style={{
-            minHeight: 32,
-            flexDirection: "row",
-            alignItems: "center",
-            gap: 8,
-          }}
-        >
+        <View className="min-h-8 flex-row items-center gap-2">
           {showBackButton && (
             <Pressable
               accessibilityRole="button"
               onPress={() => router.back()}
               style={{ paddingVertical: 4, paddingRight: 4 }}
             >
-              <Ionicons name="chevron-back" size={20} color="#FFFFFF" />
+              <Ionicons
+                name="chevron-back"
+                size={20}
+                color={palette.buttonText}
+              />
             </Pressable>
           )}
 
           {!!title && (
             <Text
-              style={{
-                color: "#FFFFFF",
-                fontSize: 15,
-                fontFamily: AlertsFontFamily.bold,
-              }}
+              className="font-ubuntu-bold text-[15px]"
+              style={{ color: palette.buttonText }}
             >
               {title}
             </Text>
@@ -168,16 +166,16 @@ export function AlertHeroIcon({
   size?: number;
   children?: React.ReactNode;
 }) {
+  const palette = useAlertsPalette();
+
   return (
     <View
+      className="self-center items-center justify-center overflow-hidden"
       style={{
-        alignSelf: "center",
-        justifyContent: "center",
-        alignItems: "center",
         width: size,
         height: size,
         borderRadius: size / 2,
-        shadowColor: "#000000",
+        shadowColor: palette.shadowColor,
         shadowOpacity: 0.1,
         shadowRadius: 9,
         shadowOffset: { width: -9, height: 6 },
@@ -193,20 +191,28 @@ export function AlertHeroIcon({
       >
         <Defs>
           <RadialGradient id="bg1" cx="42%" cy="30%" rx="50%" ry="50%">
-            <Stop offset="0" stopColor="#92272C" stopOpacity="1" />
-            <Stop offset="1" stopColor="#79142A" stopOpacity="0.9" />
+            <Stop offset="0" stopColor={palette.circleStart} stopOpacity="1" />
+            <Stop offset="1" stopColor={palette.tileIcon} stopOpacity="0.9" />
           </RadialGradient>
           <RadialGradient id="bg2" cx="75%" cy="42%" rx="40%" ry="40%">
-            <Stop offset="0" stopColor="#BD6236" stopOpacity="0.85" />
-            <Stop offset="1" stopColor="#BD6236" stopOpacity="0" />
+            <Stop offset="0" stopColor={palette.circleEnd} stopOpacity="0.85" />
+            <Stop offset="1" stopColor={palette.circleEnd} stopOpacity="0" />
           </RadialGradient>
           <RadialGradient id="bg3" cx="70%" cy="85%" rx="35%" ry="35%">
-            <Stop offset="0" stopColor="#C5B099" stopOpacity="0.5" />
-            <Stop offset="1" stopColor="#C5B099" stopOpacity="0" />
+            <Stop offset="0" stopColor={palette.circleGlow} stopOpacity="0.5" />
+            <Stop offset="1" stopColor={palette.circleGlow} stopOpacity="0" />
           </RadialGradient>
           <RadialGradient id="bg4" cx="25%" cy="88%" rx="35%" ry="35%">
-            <Stop offset="0" stopColor="#C12B35" stopOpacity="0.45" />
-            <Stop offset="1" stopColor="#C12B35" stopOpacity="0" />
+            <Stop
+              offset="0"
+              stopColor={palette.severity.emergency}
+              stopOpacity="0.45"
+            />
+            <Stop
+              offset="1"
+              stopColor={palette.severity.emergency}
+              stopOpacity="0"
+            />
           </RadialGradient>
         </Defs>
         <Circle cx="135" cy="135" r="135" fill="url(#bg1)" />
@@ -219,7 +225,7 @@ export function AlertHeroIcon({
           <MaterialCommunityIcons
             name={icon}
             size={size * 0.48}
-            color="#FFFFFF"
+            color={palette.iconOnAccent}
           />
         ) : null)}
     </View>
@@ -237,52 +243,31 @@ export function AlertModuleCard({
   const palette = useAlertsPalette();
 
   return (
-    <View style={{ flex: 1, justifyContent: "center", gap: 28 }}>
+    <View className="flex-1 justify-center gap-7">
       <AlertHeroIcon icon={icon} />
 
       <View
+        className="min-h-[188px] gap-3 rounded-t-[22px] rounded-b-[8px] px-[18px] pt-[18px] pb-[14px]"
         style={{
-          borderTopLeftRadius: 22,
-          borderTopRightRadius: 22,
-          borderBottomLeftRadius: 8,
-          borderBottomRightRadius: 8,
           backgroundColor: palette.panelBackground,
-          paddingHorizontal: 18,
-          paddingTop: 18,
-          paddingBottom: 14,
-          gap: 12,
-          minHeight: 188,
         }}
       >
         <Text
-          style={{
-            color: palette.text,
-            fontSize: 28,
-            fontWeight: "800",
-          }}
+          className="font-ubuntu-bold text-[28px]"
+          style={{ color: palette.text }}
         >
           {title}
         </Text>
 
         <Text
-          style={{
-            color: palette.panelText,
-            fontSize: 13,
-            lineHeight: 18,
-          }}
+          className="font-ubuntu-medium text-[13px] leading-[18px]"
+          style={{ color: palette.panelText }}
         >
           {description}
         </Text>
 
-        <View
-          style={{
-            marginTop: "auto",
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <View style={{ flexDirection: "row", gap: 6 }}>
+        <View className="mt-auto flex-row items-center justify-between">
+          <View className="flex-row gap-[6px]">
             {Array.from({ length: progressCount }).map((_, index) => (
               <View
                 key={`${title}-${index}`}
@@ -290,7 +275,10 @@ export function AlertModuleCard({
                   width: index === 1 ? 28 : 18,
                   height: 4,
                   borderRadius: 999,
-                  backgroundColor: index === 1 ? "#FFFFFF" : "#E7D8C6",
+                  backgroundColor:
+                    index === 1
+                      ? palette.progressActive
+                      : palette.progressInactive,
                 }}
               />
             ))}
@@ -310,7 +298,7 @@ export function AlertModuleCard({
               borderRadius: 14,
               justifyContent: "center",
               alignItems: "center",
-              backgroundColor: "#FFFFFF",
+              backgroundColor: palette.surface,
               opacity: pressed ? 0.82 : 1,
             })}
           >
@@ -333,14 +321,10 @@ export function AlertPager({
   total: number;
   activeIndex: number;
 }) {
+  const palette = useAlertsPalette();
+
   return (
-    <View
-      style={{
-        flexDirection: "row",
-        alignSelf: "center",
-        gap: 6,
-      }}
-    >
+    <View className="self-center flex-row gap-[6px]">
       {Array.from({ length: total }).map((_, index) => (
         <View
           key={`page-${index}`}
@@ -349,7 +333,9 @@ export function AlertPager({
             height: 8,
             borderRadius: 999,
             backgroundColor:
-              index === activeIndex ? "#FFFFFF" : "rgba(255,255,255,0.38)",
+              index === activeIndex
+                ? palette.progressActive
+                : palette.progressInactive,
           }}
         />
       ))}
@@ -364,17 +350,21 @@ export function DetailCard({
   children: React.ReactNode;
   style?: object;
 }) {
+  const palette = useAlertsPalette();
+
   return (
     <View
       style={[
         {
-          backgroundColor: "#FFFFFF",
+          backgroundColor: palette.cardBackground,
           borderTopLeftRadius: 22,
           borderTopRightRadius: 22,
           borderBottomLeftRadius: 6,
           borderBottomRightRadius: 6,
           padding: 16,
           gap: 12,
+          borderWidth: 1,
+          borderColor: palette.cardBorder,
         },
         style,
       ]}
@@ -388,11 +378,13 @@ export function AlertSeverityItem({
   color,
   title,
   description,
-  titleColor = "#3A342F",
-  descriptionColor = "#756C66",
+  titleColor,
+  descriptionColor,
 }: AlertSeverityItemProps) {
+  const palette = useAlertsPalette();
+
   return (
-    <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 10 }}>
+    <View className="flex-row items-start gap-2.5">
       <View
         style={{
           marginTop: 4,
@@ -402,11 +394,17 @@ export function AlertSeverityItem({
           backgroundColor: color,
         }}
       />
-      <View style={{ flex: 1, gap: 2 }}>
-        <Text style={{ color: titleColor, fontSize: 14, fontWeight: "700" }}>
+      <View className="flex-1 gap-0.5">
+        <Text
+          className="font-ubuntu-bold text-[14px]"
+          style={{ color: titleColor ?? palette.text }}
+        >
           {title}
         </Text>
-        <Text style={{ color: descriptionColor, fontSize: 11, lineHeight: 15 }}>
+        <Text
+          className="font-ubuntu-medium text-[11px] leading-[15px]"
+          style={{ color: descriptionColor ?? palette.subtleText }}
+        >
           {description}
         </Text>
       </View>
@@ -420,25 +418,19 @@ export function AlertHistoryCard({
   backgroundColor,
   textColor,
 }: AlertHistoryCardProps) {
+  const palette = useAlertsPalette();
+
   return (
     <View
+      className="gap-1 rounded-2xl px-[14px] py-3"
       style={{
-        borderRadius: 16,
         backgroundColor,
-        paddingHorizontal: 14,
-        paddingVertical: 12,
-        gap: 4,
       }}
     >
-      <View
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "space-between",
-        }}
-      >
+      <View className="flex-row items-center justify-between">
         <Text
-          style={{ color: textColor, fontSize: 14, fontWeight: "700", flex: 1 }}
+          className="flex-1 font-ubuntu-bold text-[14px]"
+          style={{ color: textColor }}
         >
           {title}
         </Text>
@@ -448,7 +440,12 @@ export function AlertHistoryCard({
           color={textColor}
         />
       </View>
-      <Text style={{ color: "#6D655E", fontSize: 11 }}>{date}</Text>
+      <Text
+        className="font-ubuntu-medium text-[11px]"
+        style={{ color: palette.subtleText }}
+      >
+        {date}
+      </Text>
     </View>
   );
 }
@@ -457,30 +454,47 @@ export function AlertNoticeCard({
   title,
   description,
   color,
-  titleColor = "#433D38",
-  descriptionColor = "#7A7067",
+  titleColor,
+  descriptionColor,
+  icon,
 }: AlertNoticeCardProps) {
-  return (
-    <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 10 }}>
-      <View
-        style={{
-          marginTop: 2,
-          width: 20,
-          height: 20,
-          borderRadius: 999,
-          backgroundColor: color,
-          justifyContent: "center",
-          alignItems: "center",
-        }}
-      >
-        <MaterialCommunityIcons name="alert" size={12} color="#FFFFFF" />
-      </View>
+  const palette = useAlertsPalette();
 
-      <View style={{ flex: 1, gap: 3 }}>
-        <Text style={{ color: titleColor, fontSize: 13, fontWeight: "700" }}>
+  return (
+    <View className="flex-row items-start gap-2.5">
+      {icon ? (
+        <View style={{ marginTop: 2 }}>{icon}</View>
+      ) : (
+        <View
+          style={{
+            marginTop: 2,
+            width: 20,
+            height: 20,
+            borderRadius: 999,
+            backgroundColor: color,
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <MaterialCommunityIcons
+            name="alert"
+            size={12}
+            color={palette.iconOnAccent}
+          />
+        </View>
+      )}
+
+      <View className="flex-1 gap-[3px]">
+        <Text
+          className="font-ubuntu-bold text-[13px]"
+          style={{ color: titleColor ?? palette.text }}
+        >
           {title}
         </Text>
-        <Text style={{ color: descriptionColor, fontSize: 11, lineHeight: 15 }}>
+        <Text
+          className="font-ubuntu-medium text-[11px] leading-[15px]"
+          style={{ color: descriptionColor ?? palette.subtleText }}
+        >
           {description}
         </Text>
       </View>
@@ -498,15 +512,11 @@ export function NotificationSwitch({
   const palette = useAlertsPalette();
 
   return (
-    <View
-      style={{
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        gap: 12,
-      }}
-    >
-      <Text style={{ color: "#433D38", fontSize: 13, fontWeight: "700" }}>
+    <View className="flex-row items-center justify-between gap-3">
+      <Text
+        className="font-ubuntu-bold text-[13px]"
+        style={{ color: palette.text }}
+      >
         Activar notificaciones
       </Text>
       <Switch
@@ -516,7 +526,7 @@ export function NotificationSwitch({
           false: palette.switchInactive,
           true: palette.switchActive,
         }}
-        thumbColor="#FFFFFF"
+        thumbColor={palette.iconOnAccent}
         ios_backgroundColor={palette.switchInactive}
       />
     </View>
@@ -529,48 +539,38 @@ export function RegionMapCard({ compact = false }: { compact?: boolean }) {
 
   return (
     <View
+      className="overflow-hidden rounded-[18px] border"
       style={{
-        borderRadius: 18,
-        overflow: "hidden",
-        borderWidth: 1,
-        borderColor: "#E7DDD0",
+        borderColor: palette.cardBorder,
       }}
     >
       <View
+        className="px-3 py-2"
         style={{
           backgroundColor: palette.severity.emergency,
-          paddingVertical: 8,
-          paddingHorizontal: 12,
         }}
       >
-        <Text
-          style={{
-            color: "#FFFFFF",
-            textAlign: "center",
-            fontSize: 12,
-            fontWeight: "700",
-          }}
-        >
+        <Text className="text-center font-ubuntu-bold text-[12px] text-white">
           Morená Nayarit
         </Text>
       </View>
 
       <View
+        className="gap-2.5 p-[14px]"
         style={{
           height: cardHeight,
-          backgroundColor: "#FFFFFF",
-          padding: 14,
-          gap: 10,
+          backgroundColor: palette.cardBackground,
         }}
       >
-        <Text style={{ color: "#534A43", fontSize: 11, lineHeight: 16 }}>
+        <Text
+          className="font-ubuntu-medium text-[11px] leading-[16px]"
+          style={{ color: palette.text }}
+        >
           Estatus: ACTIVA. Se desalojó la zona de riesgo y se mantienen brigadas
           por la posible lluvia intensa durante las próximas horas.
         </Text>
 
-        <View
-          style={{ alignItems: "center", justifyContent: "center", flex: 1 }}
-        >
+        <View className="flex-1 items-center justify-center">
           <View
             style={{
               width: compact ? 160 : 188,
@@ -644,16 +644,23 @@ export function RegionMapCard({ compact = false }: { compact?: boolean }) {
                   justifyContent: "center",
                   alignItems: "center",
                   borderWidth: 2,
-                  borderColor: "#FFFFFF",
+                  borderColor: palette.cardBackground,
                 }}
               >
-                <Ionicons name="warning" size={10} color="#FFFFFF" />
+                <Ionicons
+                  name="warning"
+                  size={10}
+                  color={palette.iconOnAccent}
+                />
               </View>
             ))}
           </View>
         </View>
 
-        <Text style={{ color: "#6E655D", fontSize: 11, lineHeight: 15 }}>
+        <Text
+          className="font-ubuntu-medium text-[11px] leading-[15px]"
+          style={{ color: palette.subtleText }}
+        >
           Zonas afectadas: Mpio. Santiago Ixcuintla, San Blas y Compostela.
         </Text>
       </View>
@@ -668,12 +675,9 @@ export function IncidentMapPreview() {
 
   return (
     <View
+      className="relative h-[146px] overflow-hidden rounded-2xl"
       style={{
-        height: 146,
-        borderRadius: 16,
-        overflow: "hidden",
-        backgroundColor: "#EDF3EA",
-        position: "relative",
+        backgroundColor: palette.mapBackground,
       }}
     >
       {[
@@ -691,7 +695,7 @@ export function IncidentMapPreview() {
             height: segment.height,
             borderRadius: 999,
             borderWidth: 8,
-            borderColor: "#CFE0C9",
+            borderColor: palette.mapRoad,
             transform: [{ rotate: index === 1 ? "-10deg" : "8deg" }],
           }}
         />
@@ -712,12 +716,12 @@ export function IncidentMapPreview() {
             borderRadius: 999,
             backgroundColor: palette.map.marker,
             borderWidth: 2,
-            borderColor: "#FFFFFF",
+            borderColor: palette.cardBackground,
             justifyContent: "center",
             alignItems: "center",
           }}
         >
-          <Ionicons name="location" size={10} color="#FFFFFF" />
+          <Ionicons name="location" size={10} color={palette.iconOnAccent} />
         </View>
       ))}
     </View>

@@ -1,9 +1,9 @@
 import React from "react";
 import Svg, { Path } from "react-native-svg";
 
-type Props = { size?: number; color?: string };
+type Props = { size?: number; color: string };
 
-export function GpsIcon({ size = 174, color = "#FFFFFF" }: Props) {
+export function GpsIcon({ size = 174, color }: Props) {
   return (
     <Svg width={size} height={size} viewBox="0 0 174 174" fill="none">
       <Path

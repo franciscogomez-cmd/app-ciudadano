@@ -1,4 +1,9 @@
-import { AlertsModulePalette, AppApiConfig, BrandingConfig, RuntimeAppConfig } from '@/types/AppConfig';
+import {
+    AlertsModulePalette,
+    AppApiConfig,
+    BrandingConfig,
+    RuntimeAppConfig,
+} from "@/types/AppConfig";
 
 type AppBaseConfig = {
   metadata: {
@@ -8,11 +13,11 @@ type AppBaseConfig = {
     androidPackage: string;
     iosBundleIdentifier: string;
     version: string;
-    orientation: 'portrait' | 'landscape' | 'default';
+    orientation: "portrait" | "landscape" | "default";
   };
   branding: BrandingConfig;
-  theme: RuntimeAppConfig['theme'];
-  navigationTabs: RuntimeAppConfig['tabs'];
+  theme: RuntimeAppConfig["theme"];
+  navigationTabs: RuntimeAppConfig["tabs"];
   assets: {
     appIcon: string;
     iosIcon: string;
@@ -39,18 +44,18 @@ type AppBaseConfig = {
   };
 };
 
-export const appBaseConfig = require('./AppBaseConfig.json') as AppBaseConfig;
+export const appBaseConfig = require("./AppBaseConfig.json") as AppBaseConfig;
 
 const resolveApiBaseUrl = () => {
   const value = process.env.EXPO_PUBLIC_API_BASE_URL;
 
   if (!value || !value.trim()) {
     throw new Error(
-      'Missing EXPO_PUBLIC_API_BASE_URL. Define it in .env before running the app.'
+      "Missing EXPO_PUBLIC_API_BASE_URL. Define it in .env before running the app.",
     );
   }
 
-  return value.replace(/\/+$/, '');
+  return value.replace(/\/+$/, "");
 };
 
 const createApiConfig = (): AppApiConfig => ({
@@ -61,21 +66,24 @@ const createApiConfig = (): AppApiConfig => ({
 });
 
 const createBrandingConfig = (): BrandingConfig => {
-  if (appBaseConfig.branding.logo.kind === 'none') {
+  if (appBaseConfig.branding.logo.kind === "none") {
     return {
       appName: appBaseConfig.branding.appName,
       logo: {
-        kind: 'none',
+        kind: "none",
       },
     };
   }
 
-  if (appBaseConfig.branding.logo.kind === 'remote') {
-    if (!appBaseConfig.branding.logo.uri || !appBaseConfig.branding.logo.uri.trim()) {
+  if (appBaseConfig.branding.logo.kind === "remote") {
+    if (
+      !appBaseConfig.branding.logo.uri ||
+      !appBaseConfig.branding.logo.uri.trim()
+    ) {
       return {
         appName: appBaseConfig.branding.appName,
         logo: {
-          kind: 'none',
+          kind: "none",
         },
       };
     }
@@ -83,7 +91,7 @@ const createBrandingConfig = (): BrandingConfig => {
     return {
       appName: appBaseConfig.branding.appName,
       logo: {
-        kind: 'remote',
+        kind: "remote",
         uri: appBaseConfig.branding.logo.uri,
       },
     };
@@ -92,13 +100,40 @@ const createBrandingConfig = (): BrandingConfig => {
   return {
     appName: appBaseConfig.branding.appName,
     logo: {
-      kind: 'local',
+      kind: "local",
       key: appBaseConfig.branding.logo.key,
     },
   };
 };
 
 export const runtimeApiConfig = createApiConfig();
+
+const createAlertsPalette = (): AlertsModulePalette => ({
+  light: {
+    ...appBaseConfig.modules.alerts.light,
+    severity: {
+      ...appBaseConfig.modules.alerts.light.severity,
+    },
+    severityText: {
+      ...appBaseConfig.modules.alerts.light.severityText,
+    },
+    map: {
+      ...appBaseConfig.modules.alerts.light.map,
+    },
+  },
+  dark: {
+    ...appBaseConfig.modules.alerts.dark,
+    severity: {
+      ...appBaseConfig.modules.alerts.dark.severity,
+    },
+    severityText: {
+      ...appBaseConfig.modules.alerts.dark.severityText,
+    },
+    map: {
+      ...appBaseConfig.modules.alerts.dark.map,
+    },
+  },
+});
 
 export const createInitialRuntimeConfig = (): RuntimeAppConfig => ({
   api: {
@@ -129,14 +164,6 @@ export const createInitialRuntimeConfig = (): RuntimeAppConfig => ({
   },
   branding: createBrandingConfig(),
   modules: {
-    alerts: {
-      ...appBaseConfig.modules.alerts,
-      severity: {
-        ...appBaseConfig.modules.alerts.severity,
-      },
-      map: {
-        ...appBaseConfig.modules.alerts.map,
-      },
-    },
+    alerts: createAlertsPalette(),
   },
 });

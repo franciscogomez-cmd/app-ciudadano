@@ -1,8 +1,9 @@
 export { ActivaNotificacionesIcon } from "./ActivaNotificacionesIcon";
+export { AlertaMeteorologicaIcon } from "./AlertaMeteorologicaIcon";
 export { AlertasIcon } from "./AlertasIcon";
 export { GpsIcon } from "./GpsIcon";
 export { HistorialAlertasIcon } from "./HistorialAlertasIcon";
 export { NivelesSeguridadIcon } from "./NivelesSeguridadIcon";
+export { NoticiasUltimaHoraIcon } from "./NoticiasUltimaHoraIcon";
 export { NotificacionesIcon } from "./NotificacionesIcon";
 export { UltimasNoticiasIcon } from "./UltimasNoticiasIcon";
-

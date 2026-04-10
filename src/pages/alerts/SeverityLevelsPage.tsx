@@ -1,12 +1,12 @@
-import React from 'react';
-import { Text, View } from 'react-native';
+import React from "react";
+import { Text, View } from "react-native";
 
 import {
-  AlertScreenScaffold,
-  AlertSeverityItem,
-  DetailCard,
-  useAlertsPalette,
-} from '@/components/alerts/AlertsUi';
+    AlertScreenScaffold,
+    AlertSeverityItem,
+    DetailCard,
+    useAlertsPalette,
+} from "@/components/alerts/AlertsUi";
 
 export function SeverityLevelsPage() {
   const palette = useAlertsPalette();
@@ -31,10 +31,13 @@ export function SeverityLevelsPage() {
         />
       </DetailCard>
 
-      <View style={{ paddingHorizontal: 4 }}>
-        <Text style={{ color: '#FFFFFF', fontSize: 12, lineHeight: 18 }}>
-          Estos niveles ayudan a priorizar que tan urgente es cada notificacion que recibe la
-          ciudadania.
+      <View className="px-1">
+        <Text
+          className="font-ubuntu-medium text-[12px] leading-[18px]"
+          style={{ color: palette.buttonText }}
+        >
+          Estos niveles ayudan a priorizar que tan urgente es cada notificacion
+          que recibe la ciudadania.
         </Text>
       </View>
     </AlertScreenScaffold>

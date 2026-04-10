@@ -82,29 +82,87 @@
   },
   "modules": {
     "alerts": {
-      "shellBackground": "#C5B099",
-      "panelBackground": "#C5B099",
-      "panelText": "#60595D",
-      "progressActive": "#FFFFFF",
-      "progressInactive": "#DACEC0",
-      "circleStart": "#92272C",
-      "circleEnd": "#BD6236",
-      "circleGlow": "#CDB19C",
-      "actionBackground": "#2D2B27",
-      "actionText": "#FFFFFF",
-      "tileIcon": "#79142A",
-      "tileText": "#60595D",
-      "severity": {
-        "preventive": "#F7C933",
-        "emergency": "#E01D24",
-        "informative": "#188BD1"
+      "light": {
+        "shellBackground": "#C5B099",
+        "panelBackground": "#C5B099",
+        "panelText": "#60595D",
+        "progressActive": "#FFFFFF",
+        "progressInactive": "#DACEC0",
+        "circleStart": "#92272C",
+        "circleEnd": "#BD6236",
+        "circleGlow": "#CDB19C",
+        "actionBackground": "#2D2B27",
+        "actionText": "#FFFFFF",
+        "tileIcon": "#79142A",
+        "tileText": "#60595D",
+        "cardBackground": "#FFFFFF",
+        "cardBorder": "#E7DDD0",
+        "subtleText": "#756C66",
+        "iconOnAccent": "#FFFFFF",
+        "shadowColor": "#000000",
+        "shadowAccent": "#B59F86",
+        "historyBadgeOuter": "#FFD7D9",
+        "historyActionIcon": "#2F2A27",
+        "mapBackground": "#EDF3EA",
+        "mapRoad": "#CFE0C9",
+        "severity": {
+          "preventive": "#F7C933",
+          "emergency": "#E01D24",
+          "informative": "#188BD1"
+        },
+        "severityText": {
+          "preventive": "#6E5718",
+          "emergency": "#FFFFFF",
+          "informative": "#FFFFFF"
+        },
+        "switchActive": "#63B32E",
+        "switchInactive": "#E3E1DE",
+        "map": {
+          "primary": "#6C99F0",
+          "secondary": "#8CB0F6",
+          "marker": "#E01D24"
+        }
       },
-      "switchActive": "#63B32E",
-      "switchInactive": "#E3E1DE",
-      "map": {
-        "primary": "#6C99F0",
-        "secondary": "#8CB0F6",
-        "marker": "#E01D24"
+      "dark": {
+        "shellBackground": "#2D2B27",
+        "panelBackground": "#5A4A36",
+        "panelText": "#F4EBDD",
+        "progressActive": "#FFFFFF",
+        "progressInactive": "#8D7245",
+        "circleStart": "#D87706",
+        "circleEnd": "#9C7A3E",
+        "circleGlow": "#B99D71",
+        "actionBackground": "#188BD1",
+        "actionText": "#FFFFFF",
+        "tileIcon": "#F4EBDD",
+        "tileText": "#F4EBDD",
+        "cardBackground": "#5A4A36",
+        "cardBorder": "#8D7245",
+        "subtleText": "#E9DAC4",
+        "iconOnAccent": "#FFFFFF",
+        "shadowColor": "#000000",
+        "shadowAccent": "#000000",
+        "historyBadgeOuter": "#6C3B40",
+        "historyActionIcon": "#F4EBDD",
+        "mapBackground": "#253028",
+        "mapRoad": "#4A5C4D",
+        "severity": {
+          "preventive": "#F7C933",
+          "emergency": "#E01D24",
+          "informative": "#188BD1"
+        },
+        "severityText": {
+          "preventive": "#2D2B27",
+          "emergency": "#FFFFFF",
+          "informative": "#FFFFFF"
+        },
+        "switchActive": "#63B32E",
+        "switchInactive": "#8D7245",
+        "map": {
+          "primary": "#6C99F0",
+          "secondary": "#8CB0F6",
+          "marker": "#E01D24"
+        }
       }
     }
   }

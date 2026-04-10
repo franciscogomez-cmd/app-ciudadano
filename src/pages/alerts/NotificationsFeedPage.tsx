@@ -1,13 +1,17 @@
-import React, { useState } from 'react';
-import { Text, View } from 'react-native';
+import React, { useState } from "react";
+import { Text, View } from "react-native";
 
 import {
-  AlertNoticeCard,
-  AlertScreenScaffold,
-  DetailCard,
-  NotificationSwitch,
-  useAlertsPalette,
-} from '@/components/alerts/AlertsUi';
+    AlertNoticeCard,
+    AlertScreenScaffold,
+    DetailCard,
+    NotificationSwitch,
+    useAlertsPalette,
+} from "@/components/alerts/AlertsUi";
+import {
+    AlertaMeteorologicaIcon,
+    NoticiasUltimaHoraIcon,
+} from "@/components/icons";
 
 export function NotificationsFeedPage() {
   const palette = useAlertsPalette();
@@ -18,13 +22,22 @@ export function NotificationsFeedPage() {
       <DetailCard style={{ gap: 14 }}>
         <AlertNoticeCard
           color={palette.severity.emergency}
+          icon={
+            <AlertaMeteorologicaIcon
+              fillColor={palette.severity.emergency}
+              strokeColor={palette.iconOnAccent}
+            />
+          }
           title="Alerta meteorologica"
           description="Se pronostican lluvias intensas. Mantente resguardado y evita zonas de riesgo."
         />
 
-        <Text style={{ color: '#726962', fontSize: 11, lineHeight: 16 }}>
-          Activa las notificaciones para recibir alertas cada vez que ocurra un evento relevante
-          cerca de tu ubicacion.
+        <Text
+          className="font-ubuntu-medium text-[11px] leading-[16px]"
+          style={{ color: palette.subtleText }}
+        >
+          Activa las notificaciones para recibir alertas cada vez que ocurra un
+          evento relevante cerca de tu ubicacion.
         </Text>
 
         <NotificationSwitch value={isEnabled} onValueChange={setIsEnabled} />
@@ -33,21 +46,36 @@ export function NotificationsFeedPage() {
       <DetailCard style={{ gap: 14 }}>
         <AlertNoticeCard
           color={palette.severity.emergency}
+          icon={
+            <AlertaMeteorologicaIcon
+              fillColor={palette.severity.emergency}
+              strokeColor={palette.iconOnAccent}
+            />
+          }
           title="Cierre vial por inundaciones"
           description="Mantente en un lugar seguro y evita cruzar avenidas con flujo alto."
         />
 
         <AlertNoticeCard
           color={palette.severity.emergency}
+          icon={
+            <NoticiasUltimaHoraIcon
+              fillColor={palette.severity.emergency}
+              strokeColor={palette.iconOnAccent}
+            />
+          }
           title="Noticia del ultimo hora"
           description="Corte de agua programado en colonias cercanas durante la madrugada."
         />
       </DetailCard>
 
-      <View style={{ paddingHorizontal: 4 }}>
-        <Text style={{ color: '#FFFFFF', fontSize: 12, lineHeight: 18 }}>
-          Esta vista concentra la configuracion y el listado de avisos activos en una misma
-          pantalla.
+      <View className="px-1">
+        <Text
+          className="font-ubuntu-medium text-[12px] leading-[18px]"
+          style={{ color: palette.buttonText }}
+        >
+          Esta vista concentra la configuracion y el listado de avisos activos
+          en una misma pantalla.
         </Text>
       </View>
     </AlertScreenScaffold>

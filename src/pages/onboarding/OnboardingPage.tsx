@@ -2,33 +2,35 @@ import { Href, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useMemo, useRef, useState } from "react";
 import {
-  FlatList,
-  NativeScrollEvent,
-  NativeSyntheticEvent,
-  Pressable,
-  Text,
-  TouchableOpacity,
-  View,
-  useWindowDimensions,
+    FlatList,
+    NativeScrollEvent,
+    NativeSyntheticEvent,
+    Pressable,
+    Text,
+    TouchableOpacity,
+    View,
+    useWindowDimensions,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Circle, Path } from "react-native-svg";
 
 import {
-  AlertHeroIcon,
-  AlertNoticeCard,
-  AlertSeverityItem,
-  AlertsFontFamily,
-  useAlertsPalette,
+    AlertHeroIcon,
+    AlertNoticeCard,
+    AlertSeverityItem,
+    useAlertsPalette,
 } from "@/components/alerts/AlertsUi";
 import {
-  ActivaNotificacionesIcon,
-  AlertasIcon,
-  GpsIcon,
-  HistorialAlertasIcon,
-  NivelesSeguridadIcon,
-  NotificacionesIcon,
+    ActivaNotificacionesIcon,
+    AlertaMeteorologicaIcon,
+    AlertasIcon,
+    GpsIcon,
+    HistorialAlertasIcon,
+    NivelesSeguridadIcon,
+    NoticiasUltimaHoraIcon,
+    NotificacionesIcon,
 } from "@/components/icons";
+import { useAppConfig } from "@/context/AppConfigContext";
 
 type OnboardingSlide = {
   renderIcon: (size: number) => React.ReactNode;
@@ -38,6 +40,19 @@ type OnboardingSlide = {
   ctaLabel?: string;
 };
 
+function OnboardingCopy({ children }: { children: React.ReactNode }) {
+  const palette = useAlertsPalette();
+
+  return (
+    <Text
+      className="font-ubuntu-medium text-[14px] leading-[20px]"
+      style={{ color: palette.buttonText }}
+    >
+      {children}
+    </Text>
+  );
+}
+
 function OnboardingProgress({
   total,
   activeIndex,
@@ -45,22 +60,18 @@ function OnboardingProgress({
   total: number;
   activeIndex: number;
 }) {
+  const palette = useAlertsPalette();
+
   return (
     <View
-      style={{
-        height: 7,
-        borderRadius: 13,
-        backgroundColor: "#D6CCBF",
-      }}
+      className="h-[7px] rounded-[13px]"
+      style={{ backgroundColor: palette.progressInactive }}
     >
       <View
+        className="absolute left-0 h-[7px] rounded-[13px]"
         style={{
-          position: "absolute",
-          left: 0,
           width: `${((activeIndex + 1) / total) * 100}%`,
-          height: 7,
-          borderRadius: 13,
-          backgroundColor: "#FFFFFF",
+          backgroundColor: palette.progressActive,
         }}
       />
     </View>
@@ -76,34 +87,33 @@ function OnboardingArrowButton({
   hidden?: boolean;
   onPress: () => void;
 }) {
+  const palette = useAlertsPalette();
+
   if (hidden) {
-    return <View style={{ width: 26, height: 26 }} />;
+    return <View className="h-[26px] w-[26px]" />;
   }
 
   return (
     <Pressable
       accessibilityRole="button"
       onPress={onPress}
-      style={({ pressed }) => ({
-        width: 26,
-        height: 26,
-        opacity: pressed ? 0.7 : 1,
-      })}
+      className="h-[26px] w-[26px]"
+      style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
     >
       <Svg width={26} height={26} viewBox="0 0 26 26" fill="none">
-        <Circle cx={13} cy={13} r={13} fill="white" />
+        <Circle cx={13} cy={13} r={13} fill={palette.progressActive} />
         {direction === "forward" ? (
           <>
             <Path
               d="M7.1665 13H18.8332"
-              stroke="#C5B099"
+              stroke={palette.panelBackground}
               strokeWidth={2}
               strokeLinecap="round"
               strokeLinejoin="round"
             />
             <Path
               d="M13 7.1665L18.8333 12.9998L13 18.8332"
-              stroke="#C5B099"
+              stroke={palette.panelBackground}
               strokeWidth={2}
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -113,14 +123,14 @@ function OnboardingArrowButton({
           <>
             <Path
               d="M18.8335 13L7.16683 13"
-              stroke="#C5B099"
+              stroke={palette.panelBackground}
               strokeWidth={2}
               strokeLinecap="round"
               strokeLinejoin="round"
             />
             <Path
               d="M13 18.8335L7.16667 13.0002L13 7.16683"
-              stroke="#C5B099"
+              stroke={palette.panelBackground}
               strokeWidth={2}
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -134,6 +144,7 @@ function OnboardingArrowButton({
 
 export function OnboardingPage() {
   const router = useRouter();
+  const { activeTheme } = useAppConfig();
   const palette = useAlertsPalette();
   const listRef = useRef<FlatList<OnboardingSlide> | null>(null);
   const { width, height } = useWindowDimensions();
@@ -147,125 +158,121 @@ export function OnboardingPage() {
   const slides = useMemo<OnboardingSlide[]>(
     () => [
       {
-        renderIcon: (s: number) => <AlertasIcon size={s} />,
+        renderIcon: (s: number) => (
+          <AlertasIcon size={s} color={palette.buttonText} />
+        ),
         title: "Alertas",
         body: (
-          <Text
-            style={{
-              color: "#FFFFFF",
-              fontFamily: AlertsFontFamily.medium,
-              fontSize: 14,
-              lineHeight: 20,
-            }}
-          >
+          <OnboardingCopy>
             Mantente informado sobre riesgos o emergencias cerca de tu ubicacion
             y recibe alertas en tiempo real en tu dispositivo.{"\n\n"}Las
             alertas se envian segun tu ubicacion. Solo recibiras notificaciones
             cuando ocurra un evento relevante cerca de ti.
-          </Text>
+          </OnboardingCopy>
         ),
       },
       {
-        renderIcon: (s: number) => <NivelesSeguridadIcon size={s} />,
+        renderIcon: (s: number) => (
+          <NivelesSeguridadIcon size={s} color={palette.buttonText} />
+        ),
         title: "Niveles de seguridad",
         body: (
-          <View style={{ gap: 10 }}>
+          <View className="gap-2.5">
             <AlertSeverityItem
               color={palette.severity.preventive}
               title="Preventiva"
               description="Situaciones que requieren precaucion y pueden representar un riesgo."
-              titleColor="#FFFFFF"
-              descriptionColor="#FFFFFF"
+              titleColor={palette.buttonText}
+              descriptionColor={palette.buttonText}
             />
             <AlertSeverityItem
               color={palette.severity.emergency}
               title="Emergencia"
               description="Situaciones de alto riesgo que requieren atencion inmediata."
-              titleColor="#FFFFFF"
-              descriptionColor="#FFFFFF"
+              titleColor={palette.buttonText}
+              descriptionColor={palette.buttonText}
             />
             <AlertSeverityItem
               color={palette.severity.informative}
               title="Informativa"
               description="Avisos relevantes para la ciudadania."
-              titleColor="#FFFFFF"
-              descriptionColor="#FFFFFF"
+              titleColor={palette.buttonText}
+              descriptionColor={palette.buttonText}
             />
           </View>
         ),
       },
       {
-        renderIcon: (s: number) => <GpsIcon size={s} />,
+        renderIcon: (s: number) => (
+          <GpsIcon size={s} color={palette.buttonText} />
+        ),
         title: "GPS",
         body: (
-          <Text
-            style={{
-              color: "#FFFFFF",
-              fontFamily: AlertsFontFamily.medium,
-              fontSize: 14,
-              lineHeight: 20,
-            }}
-          >
+          <OnboardingCopy>
             Para recibir alertas, ingresa tu codigo postal o activa tu GPS.
-          </Text>
+          </OnboardingCopy>
         ),
       },
       {
-        renderIcon: (s: number) => <NotificacionesIcon size={s} />,
+        renderIcon: (s: number) => (
+          <NotificacionesIcon size={s} color={palette.buttonText} />
+        ),
         title: "Notificaciones",
         body: (
-          <View style={{ gap: 14 }}>
+          <View className="gap-[14px]">
             <AlertNoticeCard
               color={palette.severity.emergency}
+              icon={
+                <AlertaMeteorologicaIcon
+                  fillColor={palette.severity.emergency}
+                  strokeColor={palette.iconOnAccent}
+                />
+              }
               title="Alertas meteorologicas"
               description="Recibe notificaciones sobre fenomenos meteorologicos que puedan afectar tu zona."
-              titleColor="#FFFFFF"
-              descriptionColor="#FFFFFF"
+              titleColor={palette.buttonText}
+              descriptionColor={palette.buttonText}
             />
             <AlertNoticeCard
               color={palette.severity.emergency}
+              icon={
+                <NoticiasUltimaHoraIcon
+                  fillColor={palette.severity.emergency}
+                  strokeColor={palette.iconOnAccent}
+                />
+              }
               title="Noticias de ultima hora"
               description="Recibe avisos sobre eventos o situaciones importantes que puedan impactar tu localidad."
-              titleColor="#FFFFFF"
-              descriptionColor="#FFFFFF"
+              titleColor={palette.buttonText}
+              descriptionColor={palette.buttonText}
             />
           </View>
         ),
       },
       {
-        renderIcon: (s: number) => <ActivaNotificacionesIcon size={s} />,
+        renderIcon: (s: number) => (
+          <ActivaNotificacionesIcon size={s} color={palette.buttonText} />
+        ),
         title: "Activa notificaciones",
         body: (
-          <Text
-            style={{
-              color: "#FFFFFF",
-              fontFamily: AlertsFontFamily.medium,
-              fontSize: 14,
-              lineHeight: 20,
-            }}
-          >
+          <OnboardingCopy>
             Activa las notificaciones para recibir alertas cuando ocurra una
             situacion relevante cerca de tu ubicacion.
-          </Text>
+          </OnboardingCopy>
         ),
       },
       {
-        renderIcon: (s: number) => <HistorialAlertasIcon size={s} />,
+        renderIcon: (s: number) => (
+          <HistorialAlertasIcon size={s} color={palette.buttonText} />
+        ),
         title: "Historial de alertas",
         route: "/alertas",
         ctaLabel: "Iniciar",
         body: (
-          <Text
-            style={{
-              color: "#FFFFFF",
-              fontFamily: AlertsFontFamily.medium,
-              fontSize: 14,
-              lineHeight: 20,
-            }}
-          >
+          <OnboardingCopy>
             Activa las notificaciones para recibir alertas cuando ocurra una
             situacion relevante cerca de tu ubicacion.
-          </Text>
+          </OnboardingCopy>
         ),
       },
     ],
@@ -287,8 +294,8 @@ export function OnboardingPage() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#FFFFFF" }}>
-      <StatusBar style="dark" />
+    <View className="flex-1" style={{ backgroundColor: palette.background }}>
+      <StatusBar style={activeTheme.statusBarStyle} />
 
       <FlatList
         ref={listRef}
@@ -302,19 +309,16 @@ export function OnboardingPage() {
         renderItem={({ item, index }) => {
           return (
             <View
+              className="flex-1"
               style={{
                 width: slideWidth,
                 height: height,
-                backgroundColor: "#FFFFFF",
+                backgroundColor: palette.background,
               }}
             >
               <View
-                style={{
-                  flex: 1,
-                  justifyContent: "center",
-                  alignItems: "center",
-                  paddingTop: insets.top,
-                }}
+                className="flex-1 items-center justify-center"
+                style={{ paddingTop: insets.top }}
               >
                 <AlertHeroIcon size={heroSize}>
                   {item.renderIcon(iconSize)}
@@ -322,54 +326,35 @@ export function OnboardingPage() {
               </View>
 
               <View
+                className="rounded-t-[52px] px-6 pt-8"
                 style={{
                   width: slideWidth,
-                  backgroundColor: "#C5B099",
-                  borderTopLeftRadius: 52,
-                  borderTopRightRadius: 52,
-                  paddingHorizontal: 24,
-                  paddingTop: 32,
+                  backgroundColor: palette.panelBackground,
                   paddingBottom: Math.max(insets.bottom, 16),
                 }}
               >
                 <Text
-                  style={{
-                    color: "#60595D",
-                    fontFamily: AlertsFontFamily.bold,
-                    fontSize: 30,
-                    lineHeight: 28,
-                    marginBottom: 40,
-                  }}
+                  className="mb-10 font-ubuntu-bold text-[30px] leading-[28px]"
+                  style={{ color: palette.panelText }}
                 >
                   {item.title}
                 </Text>
 
-                <View style={{ marginBottom: 40 }}>{item.body}</View>
+                <View className="mb-10">{item.body}</View>
 
                 {item.ctaLabel ? (
                   <TouchableOpacity
                     accessibilityRole="button"
                     activeOpacity={0.85}
                     onPress={() => router.replace(item.route ?? "/alertas")}
+                    className="mb-6 w-full items-center justify-center overflow-hidden rounded-lg px-3 py-[14px]"
                     style={{
-                      width: "100%",
-                      borderRadius: 8,
-                      backgroundColor: "#2D2B27",
-                      justifyContent: "center",
-                      alignItems: "center",
-                      paddingVertical: 14,
-                      paddingHorizontal: 12,
-                      marginBottom: 24,
-                      overflow: "hidden",
+                      backgroundColor: palette.actionBackground,
                     }}
                   >
                     <Text
-                      style={{
-                        color: "#FFFFFF",
-                        fontFamily: AlertsFontFamily.bold,
-                        fontSize: 14,
-                        lineHeight: 18,
-                      }}
+                      className="font-ubuntu-bold text-[14px] leading-[18px]"
+                      style={{ color: palette.actionText }}
                     >
                       {item.ctaLabel}
                     </Text>
@@ -381,14 +366,7 @@ export function OnboardingPage() {
                   activeIndex={activeIndex}
                 />
 
-                <View
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    marginTop: 20,
-                  }}
-                >
+                <View className="mt-5 flex-row items-center justify-between">
                   <OnboardingArrowButton
                     direction="back"
                     hidden={index === 0}
