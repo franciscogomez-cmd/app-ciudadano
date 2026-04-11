@@ -148,13 +148,14 @@ export function AlertHistoryPage() {
 
   return (
     <SafeAreaView
+      edges={["top"]}
       className="flex-1"
-      style={{ backgroundColor: palette.cardBackground }}
+      style={{ backgroundColor: palette.shellBackground }}
     >
       <StatusBar style={activeTheme.statusBarStyle} />
       <View
         className="flex-1"
-        style={{ backgroundColor: palette.cardBackground }}
+        // style={{ backgroundColor: palette.contentBackground }}
       >
         <View
           className="px-5 pt-3 pb-[18px]"
@@ -187,6 +188,7 @@ export function AlertHistoryPage() {
           style={{ backgroundColor: palette.cardBackground }}
         >
           <ScrollView
+            style={{ backgroundColor: palette.cardBackground }}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{
               paddingTop: 26,
@@ -194,6 +196,7 @@ export function AlertHistoryPage() {
               paddingBottom: Math.max(insets.bottom + 32, 40),
               gap: 22,
               flexGrow: 1,
+              minHeight: "100%",
             }}
           >
             {historyItems.map((item) => (

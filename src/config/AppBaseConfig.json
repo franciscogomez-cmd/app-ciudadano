@@ -84,6 +84,7 @@
     "alerts": {
       "light": {
         "shellBackground": "#C5B099",
+        "contentBackground": "#F5F1EA",
         "panelBackground": "#C5B099",
         "panelText": "#60595D",
         "progressActive": "#FFFFFF",
@@ -125,6 +126,7 @@
       },
       "dark": {
         "shellBackground": "#2D2B27",
+        "contentBackground": "#332C26",
         "panelBackground": "#5A4A36",
         "panelText": "#F4EBDD",
         "progressActive": "#FFFFFF",
@@ -132,7 +134,7 @@
         "circleStart": "#D87706",
         "circleEnd": "#9C7A3E",
         "circleGlow": "#B99D71",
-        "actionBackground": "#188BD1",
+        "actionBackground": "#D87706",
         "actionText": "#FFFFFF",
         "tileIcon": "#F4EBDD",
         "tileText": "#F4EBDD",

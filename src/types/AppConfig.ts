@@ -23,6 +23,7 @@ export type AlertSeverityPalette = {
 
 export type AlertsModuleModePalette = {
   shellBackground: string;
+  contentBackground: string;
   panelBackground: string;
   panelText: string;
   progressActive: string;

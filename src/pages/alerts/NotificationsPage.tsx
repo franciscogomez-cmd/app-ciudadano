@@ -1,103 +1,209 @@
+import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { StatusBar } from "expo-status-bar";
 import React, { useState } from "react";
-import { Pressable, Text, View } from "react-native";
-
+import { Pressable, ScrollView, Switch, Text, View } from "react-native";
 import {
-    AlertNoticeCard,
-    AlertScreenScaffold,
-    DetailCard,
-    NotificationSwitch,
-    useAlertsPalette,
-} from "@/components/alerts/AlertsUi";
+    SafeAreaView,
+    useSafeAreaInsets,
+} from "react-native-safe-area-context";
+
+import { useAlertsPalette } from "@/components/alerts/AlertsUi";
 import {
     AlertaMeteorologicaIcon,
     NoticiasUltimaHoraIcon,
 } from "@/components/icons";
+import { useAppConfig } from "@/context/AppConfigContext";
+
+function NotificationInfoCard({
+  icon,
+  title,
+  description,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+}) {
+  const palette = useAlertsPalette();
+
+  return (
+    <View
+      className="rounded-[18px] border px-[14px] py-[12px]"
+      style={{
+        backgroundColor: palette.cardBackground,
+        borderColor: palette.cardBorder,
+        shadowColor: palette.shadowAccent,
+        shadowOpacity: 0.12,
+        shadowRadius: 10,
+        shadowOffset: { width: 0, height: 4 },
+        elevation: 4,
+      }}
+    >
+      <View className="flex-row items-start gap-3">
+        <View className="pt-[1px]">{icon}</View>
+
+        <View className="flex-1 gap-0.5">
+          <Text
+            className="font-ubuntu-bold text-[15px] leading-[18px]"
+            style={{ color: palette.text }}
+          >
+            {title}
+          </Text>
+          <Text
+            className="font-ubuntu-medium text-[12px] leading-[16px]"
+            style={{ color: palette.subtleText }}
+          >
+            {description}
+          </Text>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+function NotificationPreferenceCard({
+  value,
+  onValueChange,
+}: {
+  value: boolean;
+  onValueChange: (nextValue: boolean) => void;
+}) {
+  const palette = useAlertsPalette();
+
+  return (
+    <View
+      className="rounded-[18px] border px-[14px] pt-[12px] pb-[14px]"
+      style={{
+        backgroundColor: palette.cardBackground,
+        borderColor: palette.cardBorder,
+        shadowColor: palette.shadowAccent,
+        shadowOpacity: 0.1,
+        shadowRadius: 10,
+        shadowOffset: { width: 0, height: 4 },
+        elevation: 3,
+      }}
+    >
+      <Text
+        className="font-ubuntu-medium text-[12px] leading-[16px]"
+        style={{ color: palette.subtleText }}
+      >
+        Activa las notificaciones para recibir alertas cuando ocurra una
+        situacion relevante cerca de tu ubicacion
+      </Text>
+
+      <View className="mt-[10px] flex-row items-center justify-between gap-3">
+        <Text
+          className="flex-1 font-ubuntu-bold text-[15px] leading-[18px]"
+          style={{ color: palette.text }}
+        >
+          Activar notificaciones
+        </Text>
+
+        <View style={{ transform: [{ scaleX: 0.92 }, { scaleY: 0.92 }] }}>
+          <Switch
+            value={value}
+            onValueChange={onValueChange}
+            trackColor={{
+              false: palette.switchInactive,
+              true: palette.switchActive,
+            }}
+            thumbColor={palette.iconOnAccent}
+            ios_backgroundColor={palette.switchInactive}
+          />
+        </View>
+      </View>
+    </View>
+  );
+}
 
 export function NotificationsPage() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const palette = useAlertsPalette();
+  const { activeTheme } = useAppConfig();
   const [isEnabled, setIsEnabled] = useState(false);
 
   return (
-    <AlertScreenScaffold showBackButton title="Notificaciones">
-      <DetailCard>
-        <AlertNoticeCard
-          color={palette.severity.emergency}
-          icon={
-            <AlertaMeteorologicaIcon
-              fillColor={palette.severity.emergency}
-              strokeColor={palette.iconOnAccent}
-            />
-          }
-          title="Alerta meteorologica"
-          description="Se pronostican lluvias intensas. Mantente resguardado y sigue las alertas."
-        />
-        <AlertNoticeCard
-          color={palette.severity.emergency}
-          icon={
-            <NoticiasUltimaHoraIcon
-              fillColor={palette.severity.emergency}
-              strokeColor={palette.iconOnAccent}
-            />
-          }
-          title="Noticias del clima hoy"
-          description="No olvides paraguas ni ropa abrigadora. Hay posibilidad de tormentas."
-        />
+    <SafeAreaView
+      edges={["top"]}
+      className="flex-1"
+      style={{ backgroundColor: palette.shellBackground }}
+    >
+      <StatusBar style={activeTheme.statusBarStyle} />
 
-        <Text
-          className="font-ubuntu-medium text-[11px] leading-[16px]"
-          style={{ color: palette.subtleText }}
+      <View className="flex-1">
+        <View
+          className="px-5 pt-3 pb-[18px]"
+          style={{ backgroundColor: palette.shellBackground }}
         >
-          Activa las notificaciones para recibir alertas cada vez que ocurra un
-          evento relevante cerca de tu ubicacion.
-        </Text>
+          <View className="min-h-9 flex-row items-center gap-3">
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => router.back()}
+              style={{ paddingVertical: 4, paddingRight: 4 }}
+            >
+              <Ionicons
+                name="chevron-back"
+                size={24}
+                color={palette.buttonText}
+              />
+            </Pressable>
 
-        <NotificationSwitch value={isEnabled} onValueChange={setIsEnabled} />
-      </DetailCard>
+            <Text
+              className="font-ubuntu-bold text-[17px] leading-[22px]"
+              style={{ color: palette.buttonText }}
+            >
+              Notificaciones
+            </Text>
+          </View>
+        </View>
 
-      <View className="gap-3">
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => router.push("/alertas/notificaciones-feed")}
-          className="rounded-[18px] px-4 py-[14px]"
+        <View
+          className="-mt-1 flex-1 overflow-hidden rounded-t-[42px]"
           style={{ backgroundColor: palette.cardBackground }}
         >
-          <Text
-            className="font-ubuntu-bold text-[14px]"
-            style={{ color: palette.text }}
+          <ScrollView
+            style={{ flex: 1, backgroundColor: palette.cardBackground }}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{
+              paddingTop: 26,
+              paddingHorizontal: 22,
+              paddingBottom: Math.max(insets.bottom + 34, 42),
+              gap: 14,
+              flexGrow: 1,
+            }}
           >
-            Ver bandeja completa
-          </Text>
-          <Text
-            className="mt-1 font-ubuntu-medium text-[11px]"
-            style={{ color: palette.subtleText }}
-          >
-            Abre la vista extendida con alertas, noticias y configuracion
-            visual.
-          </Text>
-        </Pressable>
+            <NotificationInfoCard
+              icon={
+                <AlertaMeteorologicaIcon
+                  size={44}
+                  fillColor={palette.severity.emergency}
+                  strokeColor={palette.iconOnAccent}
+                />
+              }
+              title="Alertas meteorologicas"
+              description="Recibe notificaciones sobre fenomenos meteorologicos que puedan afectar tu zona, como tormentas, inundaciones o huracanes."
+            />
 
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => router.push("/alertas/incidente")}
-          className="rounded-[18px] px-4 py-[14px]"
-          style={{ backgroundColor: palette.cardBackground }}
-        >
-          <Text
-            className="font-ubuntu-bold text-[14px]"
-            style={{ color: palette.text }}
-          >
-            Ver incidente con mapa
-          </Text>
-          <Text
-            className="mt-1 font-ubuntu-medium text-[11px]"
-            style={{ color: palette.subtleText }}
-          >
-            Revisa una alerta activa con ubicacion y zonas afectadas.
-          </Text>
-        </Pressable>
+            <NotificationInfoCard
+              icon={
+                <NoticiasUltimaHoraIcon
+                  size={44}
+                  fillColor={palette.severity.emergency}
+                  strokeColor={palette.iconOnAccent}
+                />
+              }
+              title="Noticias de ultima hora"
+              description="Recibe avisos sobre eventos o situaciones importantes que puedan impactar tu localidad."
+            />
+
+            <NotificationPreferenceCard
+              value={isEnabled}
+              onValueChange={setIsEnabled}
+            />
+          </ScrollView>
+        </View>
       </View>
-    </AlertScreenScaffold>
+    </SafeAreaView>
   );
 }
