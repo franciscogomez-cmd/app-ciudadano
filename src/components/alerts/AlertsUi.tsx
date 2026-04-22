@@ -505,9 +505,11 @@ export function AlertNoticeCard({
 export function NotificationSwitch({
   value,
   onValueChange,
+  disabled = false,
 }: {
   value: boolean;
   onValueChange: (nextValue: boolean) => void;
+  disabled?: boolean;
 }) {
   const palette = useAlertsPalette();
 
@@ -522,6 +524,7 @@ export function NotificationSwitch({
       <Switch
         value={value}
         onValueChange={onValueChange}
+        disabled={disabled}
         trackColor={{
           false: palette.switchInactive,
           true: palette.switchActive,

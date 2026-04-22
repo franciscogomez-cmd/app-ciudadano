@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { Text, View } from "react-native";
 
 import {
@@ -12,10 +12,11 @@ import {
     AlertaMeteorologicaIcon,
     NoticiasUltimaHoraIcon,
 } from "@/components/icons";
+import { useNotifications } from "@/context/NotificationContext";
 
 export function NotificationsFeedPage() {
   const palette = useAlertsPalette();
-  const [isEnabled, setIsEnabled] = useState(true);
+  const { notifActivas, isLoading, toggleNotifications } = useNotifications();
 
   return (
     <AlertScreenScaffold showBackButton title="Notificaciones">
@@ -40,7 +41,11 @@ export function NotificationsFeedPage() {
           evento relevante cerca de tu ubicacion.
         </Text>
 
-        <NotificationSwitch value={isEnabled} onValueChange={setIsEnabled} />
+        <NotificationSwitch
+          value={notifActivas}
+          disabled={isLoading}
+          onValueChange={(enabled) => { void toggleNotifications(enabled); }}
+        />
       </DetailCard>
 
       <DetailCard style={{ gap: 14 }}>
@@ -57,14 +62,14 @@ export function NotificationsFeedPage() {
         />
 
         <AlertNoticeCard
-          color={palette.severity.emergency}
+          color={palette.severity.preventive}
           icon={
             <NoticiasUltimaHoraIcon
-              fillColor={palette.severity.emergency}
+              fillColor={palette.severity.preventive}
               strokeColor={palette.iconOnAccent}
             />
           }
-          title="Noticia del ultimo hora"
+          title="Noticia de ultima hora"
           description="Corte de agua programado en colonias cercanas durante la madrugada."
         />
       </DetailCard>

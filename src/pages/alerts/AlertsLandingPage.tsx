@@ -1,7 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
+import * as Location from "expo-location";
 import { Href, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Image, Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -112,6 +113,18 @@ export function AlertsLandingPage() {
   const insets = useSafeAreaInsets();
   const palette = useAlertsPalette();
   const { activeTheme } = useAppConfig();
+  const [locationGranted, setLocationGranted] = useState(false);
+
+  useEffect(() => {
+    Location.getForegroundPermissionsAsync().then(({ status }) => {
+      setLocationGranted(status === "granted");
+    });
+  }, []);
+
+  async function handleActivarGps() {
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    setLocationGranted(status === "granted");
+  }
 
   return (
     <View
@@ -199,7 +212,9 @@ export function AlertsLandingPage() {
               className="font-ubuntu-medium text-[15px] leading-[22px]"
               style={{ color: palette.panelText }}
             >
-              Para recibir alertas, ingresa tu código postal o activa tu GPS.
+              {locationGranted
+                ? "Para recibir alertas, ingresa tu código postal."
+                : "Para recibir alertas, ingresa tu código postal o activa tu GPS."}
             </Text>
 
             <AlertActionButton
@@ -208,12 +223,14 @@ export function AlertsLandingPage() {
               textColor={palette.actionText}
               onPress={() => router.push("/alertas/incidente")}
             />
-            <AlertActionButton
-              label="Activar GPS"
-              backgroundColor={palette.actionBackground}
-              textColor={palette.actionText}
-              onPress={() => router.push("/alertas/incidente")}
-            />
+            {!locationGranted && (
+              <AlertActionButton
+                label="Activar GPS"
+                backgroundColor={palette.actionBackground}
+                textColor={palette.actionText}
+                onPress={handleActivarGps}
+              />
+            )}
           </View>
         </View>
       </View>

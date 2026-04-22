@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React, { useState } from "react";
+import React from "react";
 import { Pressable, ScrollView, Switch, Text, View } from "react-native";
 import {
     SafeAreaView,
@@ -13,7 +13,9 @@ import {
     AlertaMeteorologicaIcon,
     NoticiasUltimaHoraIcon,
 } from "@/components/icons";
+import { AlertMapView } from "@/components/map/AlertMapView";
 import { useAppConfig } from "@/context/AppConfigContext";
+import { useNotifications } from "@/context/NotificationContext";
 
 function NotificationInfoCard({
   icon,
@@ -64,9 +66,11 @@ function NotificationInfoCard({
 function NotificationPreferenceCard({
   value,
   onValueChange,
+  isLoading,
 }: {
   value: boolean;
   onValueChange: (nextValue: boolean) => void;
+  isLoading: boolean;
 }) {
   const palette = useAlertsPalette();
 
@@ -103,6 +107,7 @@ function NotificationPreferenceCard({
           <Switch
             value={value}
             onValueChange={onValueChange}
+            disabled={isLoading}
             trackColor={{
               false: palette.switchInactive,
               true: palette.switchActive,
@@ -121,7 +126,9 @@ export function NotificationsPage() {
   const insets = useSafeAreaInsets();
   const palette = useAlertsPalette();
   const { activeTheme } = useAppConfig();
-  const [isEnabled, setIsEnabled] = useState(false);
+  const { notifActivas, isPermissionGranted, isRegistered, isLoading, toggleNotifications, openSystemSettings } = useNotifications();
+
+  const showPermissionBanner = isRegistered && !isPermissionGranted;
 
   return (
     <SafeAreaView
@@ -197,10 +204,54 @@ export function NotificationsPage() {
               description="Recibe avisos sobre eventos o situaciones importantes que puedan impactar tu localidad."
             />
 
-            <NotificationPreferenceCard
-              value={isEnabled}
-              onValueChange={setIsEnabled}
+            <AlertMapView
+              latitude={21.5045}
+              longitude={-104.8946}
+              radiusKm={3}
+              colorHex={palette.severity.emergency}
+              height={200}
             />
+
+            <NotificationPreferenceCard
+              value={notifActivas}
+              onValueChange={(enabled) => { void toggleNotifications(enabled); }}
+              isLoading={isLoading}
+            />
+
+            {showPermissionBanner && (
+              <View
+                className="rounded-[18px] border px-[14px] py-[14px]"
+                style={{
+                  backgroundColor: palette.cardBackground,
+                  borderColor: palette.severity.preventive,
+                }}
+              >
+                <Text
+                  className="font-ubuntu-bold text-[14px] leading-[18px]"
+                  style={{ color: palette.text }}
+                >
+                  Notificaciones desactivadas
+                </Text>
+                <Text
+                  className="font-ubuntu-medium text-[12px] leading-[16px] mt-1"
+                  style={{ color: palette.subtleText }}
+                >
+                  Para recibir alertas activa los permisos en la configuracion de tu dispositivo.
+                </Text>
+                <Pressable
+                  onPress={openSystemSettings}
+                  className="mt-[10px] self-start rounded-[10px] px-[14px] py-[8px]"
+                  style={{ backgroundColor: palette.switchActive }}
+                >
+                  <Text
+                    className="font-ubuntu-bold text-[13px]"
+                    style={{ color: palette.iconOnAccent }}
+                  >
+                    Ir a configuracion
+                  </Text>
+                </Pressable>
+              </View>
+            )}
           </ScrollView>
         </View>
       </View>

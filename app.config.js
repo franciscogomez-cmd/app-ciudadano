@@ -29,6 +29,16 @@ module.exports = ({ config }) => ({
   },
   plugins: [
     [
+      'onesignal-expo-plugin',
+      { mode: 'development' },
+    ],
+    [
+      'expo-location',
+      {
+        locationWhenInUsePermission: 'Esta app usa tu ubicación para enviarte alertas relevantes a tu zona.',
+      },
+    ],
+    [
       'expo-build-properties',
       {
         ios: {

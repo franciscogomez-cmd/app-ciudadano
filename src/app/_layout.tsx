@@ -6,8 +6,13 @@ import { StatusBar } from "expo-status-bar";
 import * as SystemUI from "expo-system-ui";
 import { useColorScheme as useNativeWindColorScheme } from "nativewind";
 import React, { useEffect } from "react";
+import { OneSignal } from "react-native-onesignal";
 
 import { AppConfigProvider, useAppConfig } from "@/context/AppConfigContext";
+import { NotificationProvider } from "@/context/NotificationContext";
+
+OneSignal.Debug.setLogLevel(6);
+OneSignal.initialize(process.env.EXPO_PUBLIC_ONESIGNAL_APP_ID ?? "");
 
 function RootNavigator() {
   const { activeTheme, config, resolvedColorMode } = useAppConfig();
@@ -56,7 +61,9 @@ export default function RootLayout() {
 
   return (
     <AppConfigProvider>
-      <RootNavigator />
+      <NotificationProvider>
+        <RootNavigator />
+      </NotificationProvider>
     </AppConfigProvider>
   );
 }
