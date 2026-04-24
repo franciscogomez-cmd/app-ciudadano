@@ -5,7 +5,7 @@ import {
   Map,
 } from "@maplibre/maplibre-react-native";
 import React from "react";
-import { StyleSheet, View } from "react-native";
+import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
 
 const OPENFREEMAP_STYLE = "https://tiles.openfreemap.org/styles/liberty";
 
@@ -91,16 +91,27 @@ export function AlertMapView({
   };
 
   const zoomLevel = radiusKm
-    ? Math.max(8, 13 - Math.log2(radiusKm))
-    : 13;
+    ? Math.max(8, 13.5 - Math.log2(radiusKm))
+    : 14;
+
+  function openInMaps() {
+    void Linking.openURL(
+      `https://maps.google.com/maps?q=${latitude},${longitude}`,
+    );
+  }
 
   return (
     <View style={[styles.container, { height }]}>
-      <Map mapStyle={OPENFREEMAP_STYLE} style={styles.map} pitchEnabled={false} rotateEnabled={false}>
+      <Map
+        mapStyle={OPENFREEMAP_STYLE}
+        style={styles.map}
+        pitchEnabled={false}
+        rotateEnabled={false}
+      >
         <Camera
-          centerCoordinate={[longitude, latitude]}
-          zoomLevel={zoomLevel}
-          animationDuration={0}
+          center={[longitude, latitude]}
+          zoom={zoomLevel}
+          duration={0}
         />
 
         {zoneGeoJSON && (
@@ -108,18 +119,18 @@ export function AlertMapView({
             <Layer
               id="zone-fill"
               type="fill"
-              style={{
-                fillColor: hexToRgba(colorHex, 0.18),
-                fillOutlineColor: "transparent",
+              paint={{
+                "fill-color": hexToRgba(colorHex, 0.18),
+                "fill-outline-color": "transparent",
               }}
             />
             <Layer
               id="zone-border"
               type="line"
-              style={{
-                lineColor: colorHex,
-                lineWidth: 2,
-                lineOpacity: 0.9,
+              paint={{
+                "line-color": colorHex,
+                "line-width": 2,
+                "line-opacity": 0.9,
               }}
             />
           </GeoJSONSource>
@@ -129,15 +140,22 @@ export function AlertMapView({
           <Layer
             id="center-pin"
             type="circle"
-            style={{
-              circleRadius: 7,
-              circleColor: colorHex,
-              circleStrokeWidth: 2,
-              circleStrokeColor: "#FFFFFF",
+            paint={{
+              "circle-radius": 7,
+              "circle-color": colorHex,
+              "circle-stroke-width": 2,
+              "circle-stroke-color": "#FFFFFF",
             }}
           />
         </GeoJSONSource>
       </Map>
+
+      {/* Overlay transparente — al tocar abre Google Maps */}
+      <Pressable onPress={openInMaps} style={StyleSheet.absoluteFillObject}>
+        <View style={styles.badge}>
+          <Text style={styles.badgeText}>📍 Ver en Google Maps</Text>
+        </View>
+      </Pressable>
     </View>
   );
 }
@@ -150,5 +168,19 @@ const styles = StyleSheet.create({
   },
   map: {
     flex: 1,
+  },
+  badge: {
+    position: "absolute",
+    bottom: 8,
+    right: 8,
+    backgroundColor: "rgba(0,0,0,0.52)",
+    borderRadius: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  badgeText: {
+    color: "#FFFFFF",
+    fontSize: 11,
+    fontFamily: "Ubuntu_500Medium",
   },
 });

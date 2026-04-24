@@ -95,6 +95,18 @@ export async function updateTokenPush(
   await AsyncStorage.setItem(KEYS.tokenPush, tokenPush);
 }
 
+export async function updateUserLocation(
+  userId: number,
+  latitud: number,
+  longitud: number,
+  precisionMetros: number,
+): Promise<void> {
+  await apiRequest(`/usuarios/${userId}/ubicacion`, {
+    method: 'PATCH',
+    body: { latitud, longitud, precisionMetros },
+  });
+}
+
 export async function updatePreferences(
   userId: number,
   prefs: { notifActivas: boolean; severidadMinima?: SeveridadMinima },

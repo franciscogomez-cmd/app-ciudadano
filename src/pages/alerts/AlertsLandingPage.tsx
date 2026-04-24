@@ -14,6 +14,10 @@ import {
   UltimasNoticiasIcon,
 } from "@/components/icons";
 import { useAppConfig } from "@/context/AppConfigContext";
+import {
+  getStoredUserId,
+  updateUserLocation,
+} from "@/services/users/UserService";
 
 type AlertFeatureCardProps = {
   icon: React.ReactNode;
@@ -117,13 +121,37 @@ export function AlertsLandingPage() {
 
   useEffect(() => {
     Location.getForegroundPermissionsAsync().then(({ status }) => {
-      setLocationGranted(status === "granted");
+      const granted = status === "granted";
+      setLocationGranted(granted);
+      if (granted) void sendLocation();
     });
   }, []);
 
   async function handleActivarGps() {
     const { status } = await Location.requestForegroundPermissionsAsync();
-    setLocationGranted(status === "granted");
+    const granted = status === "granted";
+    setLocationGranted(granted);
+    if (granted) {
+      void sendLocation();
+    }
+  }
+
+  async function sendLocation() {
+    try {
+      const [userId, pos] = await Promise.all([
+        getStoredUserId(),
+        Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }),
+      ]);
+      if (!userId) return;
+      await updateUserLocation(
+        userId,
+        pos.coords.latitude,
+        pos.coords.longitude,
+        pos.coords.accuracy ?? 0,
+      );
+    } catch {
+      // no crítico
+    }
   }
 
   return (

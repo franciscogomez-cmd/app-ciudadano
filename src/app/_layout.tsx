@@ -6,6 +6,7 @@ import { StatusBar } from "expo-status-bar";
 import * as SystemUI from "expo-system-ui";
 import { useColorScheme as useNativeWindColorScheme } from "nativewind";
 import React, { useEffect } from "react";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { OneSignal } from "react-native-onesignal";
 
 import { AppConfigProvider, useAppConfig } from "@/context/AppConfigContext";
@@ -60,10 +61,12 @@ export default function RootLayout() {
   }
 
   return (
-    <AppConfigProvider>
-      <NotificationProvider>
-        <RootNavigator />
-      </NotificationProvider>
-    </AppConfigProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <AppConfigProvider>
+        <NotificationProvider>
+          <RootNavigator />
+        </NotificationProvider>
+      </AppConfigProvider>
+    </GestureHandlerRootView>
   );
 }

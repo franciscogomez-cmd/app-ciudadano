@@ -50,11 +50,11 @@ Usa `npx expo prebuild --clean` solo cuando quieras reconstruir completamente lo
 
 ## Configuracion rapida
 
-1) Edita `.env` solo para API:
+1. Edita `.env` solo para API:
 
 - `EXPO_PUBLIC_API_BASE_URL`
 
-2) Edita `src/config/AppBaseConfig.json` para:
+2. Edita `src/config/AppBaseConfig.json` para:
 
 - nombre app, slug y scheme
 - bundle/package id (`iosBundleIdentifier`, `androidPackage`)
@@ -90,6 +90,12 @@ cd ..
 
 # 5) Corre iOS de nuevo
 npx expo run:ios --device
+```
+
+# Generar APK
+
+```bash
+cd android && ./gradlew assembleDebug
 ```
 
 Este proyecto ya incluye `ios.buildReactNativeFromSource: true` en `app.config.js` para evitar fallos de `Copy XCFrameworks` con `hermes-engine` y `ReactNativeDependencies`.
