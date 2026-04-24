@@ -9,26 +9,26 @@ export type AlertCategory = {
 
 export type Alert = {
   id: number;
-  categoriaId: number;
-  titulo: string;
-  descripcion: string;
+  categoriaId: number | null;
+  titulo: string | null;
+  descripcion: string | null;
   nivelSeveridad: 'emergencia' | 'preventiva' | 'informativa';
-  estatus: string;
-  fechaInicio: string;
+  estatus: string | null;
+  fechaInicio: string | null;
   fechaFin: string | null;
-  nivelCobertura: string;
+  nivelCobertura: string | null;
   zonaId: number | null;
   centroLatitud: string | null;
   centroLongitud: string | null;
   radioKm: string | null;
   poligonoZona: null;
-  acciones: string[];
+  acciones: string[] | null;
   imagenUrl: string | null;
-  mapaVisible: boolean;
-  totalEnviadas: number;
-  creadoEn: string;
-  actualizadoEn: string;
-  categoria: AlertCategory;
+  mapaVisible: boolean | null;
+  totalEnviadas: number | null;
+  creadoEn: string | null;
+  actualizadoEn: string | null;
+  categoria: AlertCategory | null;
 };
 
 export type AlertsResponse = {
@@ -87,7 +87,13 @@ export async function fetchUserAlerts(
 
 export async function fetchLastAlert(userId: number): Promise<Alert | null> {
   try {
-    return await apiRequest<Alert>(`/usuarios/${userId}/alertas/ultimo`);
+    const raw = await apiRequest<{ data: Alert | null; message?: string } | Alert>(
+      `/usuarios/${userId}/alertas/ultimo`,
+    );
+    if (raw && typeof raw === 'object' && 'data' in raw) {
+      return (raw as { data: Alert | null }).data;
+    }
+    return raw as Alert;
   } catch {
     return null;
   }
@@ -101,6 +107,31 @@ export async function fetchUserNotifications(
   return apiRequest<NotificacionesResponse>(`/usuarios/${userId}/notificaciones`, {
     query: { page, limit },
   });
+}
+
+export type AlertActualizacion = {
+  id: number;
+  alertaId: number;
+  mensaje: string | null;
+  estatusAnterior: string | null;
+  estatusNuevo: string | null;
+  creadoEn: string | null;
+};
+
+export async function fetchAlertActualizaciones(
+  alertaId: number,
+): Promise<AlertActualizacion[]> {
+  try {
+    const raw = await apiRequest<{ data: AlertActualizacion[] } | AlertActualizacion[]>(
+      `/alertas/${alertaId}/actualizaciones`,
+    );
+    if (raw && typeof raw === 'object' && 'data' in raw && !Array.isArray(raw)) {
+      return (raw as { data: AlertActualizacion[] }).data ?? [];
+    }
+    return (raw as AlertActualizacion[]) ?? [];
+  } catch {
+    return [];
+  }
 }
 
 export async function markNotificationAsRead(

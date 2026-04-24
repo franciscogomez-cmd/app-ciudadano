@@ -9,72 +9,21 @@ import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
 
 const OPENFREEMAP_STYLE = "https://tiles.openfreemap.org/styles/liberty";
 
-type GeoJSONPolygon = {
-  type: "Polygon";
-  coordinates: [number, number][][];
-};
-
 type AlertMapViewProps = {
   latitude: number;
   longitude: number;
-  /** Radio en km — dibuja un círculo sobre el mapa */
   radiusKm?: number;
-  /** Polígono GeoJSON custom — tiene prioridad sobre radiusKm */
-  polygon?: GeoJSONPolygon;
-  /** Color hex de la zona (#FF0000) */
   colorHex?: string;
   height?: number;
 };
-
-function buildCirclePolygon(
-  lat: number,
-  lng: number,
-  radiusKm: number,
-  points = 64,
-): GeoJSONPolygon {
-  const coords: [number, number][] = [];
-  const distX = radiusKm / (111.32 * Math.cos((lat * Math.PI) / 180));
-  const distY = radiusKm / 110.574;
-
-  for (let i = 0; i <= points; i++) {
-    const angle = (i / points) * 2 * Math.PI;
-    coords.push([lng + distX * Math.cos(angle), lat + distY * Math.sin(angle)]);
-  }
-
-  return { type: "Polygon", coordinates: [coords] };
-}
-
-function hexToRgba(hex: string, opacity: number): string {
-  const clean = hex.replace("#", "");
-  const r = parseInt(clean.substring(0, 2), 16);
-  const g = parseInt(clean.substring(2, 4), 16);
-  const b = parseInt(clean.substring(4, 6), 16);
-  return `rgba(${r},${g},${b},${opacity})`;
-}
 
 export function AlertMapView({
   latitude,
   longitude,
   radiusKm,
-  polygon,
   colorHex = "#EF4444",
   height = 200,
 }: AlertMapViewProps) {
-  const zonePolygon =
-    polygon ?? (radiusKm ? buildCirclePolygon(latitude, longitude, radiusKm) : null);
-
-  const zoneGeoJSON = zonePolygon
-    ? {
-        type: "FeatureCollection" as const,
-        features: [
-          {
-            type: "Feature" as const,
-            geometry: zonePolygon,
-            properties: {},
-          },
-        ],
-      }
-    : null;
 
   const centerGeoJSON = {
     type: "FeatureCollection" as const,
@@ -113,28 +62,6 @@ export function AlertMapView({
           zoom={zoomLevel}
           duration={0}
         />
-
-        {zoneGeoJSON && (
-          <GeoJSONSource id="zone" data={zoneGeoJSON}>
-            <Layer
-              id="zone-fill"
-              type="fill"
-              paint={{
-                "fill-color": hexToRgba(colorHex, 0.18),
-                "fill-outline-color": "transparent",
-              }}
-            />
-            <Layer
-              id="zone-border"
-              type="line"
-              paint={{
-                "line-color": colorHex,
-                "line-width": 2,
-                "line-opacity": 0.9,
-              }}
-            />
-          </GeoJSONSource>
-        )}
 
         <GeoJSONSource id="center" data={centerGeoJSON}>
           <Layer

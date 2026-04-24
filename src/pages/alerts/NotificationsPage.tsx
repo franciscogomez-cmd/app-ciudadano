@@ -1,21 +1,26 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Pressable, ScrollView, Switch, Text, View } from "react-native";
 import {
-    SafeAreaView,
-    useSafeAreaInsets,
+  SafeAreaView,
+  useSafeAreaInsets,
 } from "react-native-safe-area-context";
 
 import { useAlertsPalette } from "@/components/alerts/AlertsUi";
 import {
-    AlertaMeteorologicaIcon,
-    NoticiasUltimaHoraIcon,
+  AlertaMeteorologicaIcon,
+  NoticiasUltimaHoraIcon,
 } from "@/components/icons";
 import { AlertMapView } from "@/components/map/AlertMapView";
 import { useAppConfig } from "@/context/AppConfigContext";
 import { useNotifications } from "@/context/NotificationContext";
+import {
+  type UserProfile,
+  fetchUserProfile,
+  getStoredUserId,
+} from "@/services/users/UserService";
 
 function NotificationInfoCard({
   icon,
@@ -126,7 +131,28 @@ export function NotificationsPage() {
   const insets = useSafeAreaInsets();
   const palette = useAlertsPalette();
   const { activeTheme } = useAppConfig();
-  const { notifActivas, isPermissionGranted, isRegistered, isLoading, toggleNotifications, openSystemSettings } = useNotifications();
+  const {
+    notifActivas,
+    isPermissionGranted,
+    isRegistered,
+    isLoading,
+    toggleNotifications,
+    openSystemSettings,
+  } = useNotifications();
+
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    async function load() {
+      const uid = await getStoredUserId();
+      if (!uid || !active) return;
+      const profile = await fetchUserProfile(uid);
+      if (active) setUserProfile(profile);
+    }
+    void load();
+    return () => { active = false; };
+  }, []);
 
   const showPermissionBanner = isRegistered && !isPermissionGranted;
 
@@ -204,17 +230,20 @@ export function NotificationsPage() {
               description="Recibe avisos sobre eventos o situaciones importantes que puedan impactar tu localidad."
             />
 
-            <AlertMapView
-              latitude={21.5045}
-              longitude={-104.8946}
-              radiusKm={3}
-              colorHex={palette.severity.emergency}
-              height={200}
-            />
+            {userProfile?.latitud != null && userProfile?.longitud != null && (
+              <AlertMapView
+                latitude={parseFloat(userProfile.latitud)}
+                longitude={parseFloat(userProfile.longitud)}
+                colorHex={palette.severity.emergency}
+                height={200}
+              />
+            )}
 
             <NotificationPreferenceCard
               value={notifActivas}
-              onValueChange={(enabled) => { void toggleNotifications(enabled); }}
+              onValueChange={(enabled) => {
+                void toggleNotifications(enabled);
+              }}
               isLoading={isLoading}
             />
 
@@ -236,7 +265,8 @@ export function NotificationsPage() {
                   className="font-ubuntu-medium text-[12px] leading-[16px] mt-1"
                   style={{ color: palette.subtleText }}
                 >
-                  Para recibir alertas activa los permisos en la configuracion de tu dispositivo.
+                  Para recibir alertas activa los permisos en la configuracion
+                  de tu dispositivo.
                 </Text>
                 <Pressable
                   onPress={openSystemSettings}

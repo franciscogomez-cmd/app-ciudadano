@@ -16,16 +16,23 @@ import {
   fetchUserNotifications,
   markNotificationAsRead,
 } from "@/services/alerts/AlertService";
-import { getStoredUserId } from "@/services/users/UserService";
+import {
+  type UserProfile,
+  fetchUserProfile,
+  getStoredUserId,
+} from "@/services/users/UserService";
 
 function severityColor(
   nivel: string | undefined,
   palette: ReturnType<typeof useAlertsPalette>,
 ): string {
   switch (nivel) {
-    case "emergencia": return palette.severity.emergency;
-    case "preventiva": return palette.severity.preventive;
-    default: return palette.severity.informative;
+    case "emergencia":
+      return palette.severity.emergency;
+    case "preventiva":
+      return palette.severity.preventive;
+    default:
+      return palette.severity.informative;
   }
 }
 
@@ -61,7 +68,10 @@ function NotificacionCard({
           <Text style={{ fontSize: 14 }}>{notif.categoriaIcono}</Text>
         ) : (
           !isRead && (
-            <View className="h-2 w-2 rounded-full" style={{ backgroundColor: "#FFFFFF" }} />
+            <View
+              className="h-2 w-2 rounded-full"
+              style={{ backgroundColor: "#FFFFFF" }}
+            />
           )
         )}
         <Text
@@ -92,7 +102,12 @@ function NotificacionCard({
             </Text>
             <View className="flex-row items-center gap-2">
               <View
-                style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: color }}
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: 3,
+                  backgroundColor: color,
+                }}
               />
               <Text
                 className="font-ubuntu-medium text-[11px]"
@@ -103,17 +118,22 @@ function NotificacionCard({
             </View>
           </View>
 
-          {notif.alertaCentroLatitud != null && notif.alertaCentroLongitud != null && (
-            <View style={{ paddingHorizontal: 12 }}>
-              <AlertMapView
-                latitude={parseFloat(notif.alertaCentroLatitud)}
-                longitude={parseFloat(notif.alertaCentroLongitud)}
-                radiusKm={notif.alertaRadioKm ? parseFloat(notif.alertaRadioKm) : undefined}
-                colorHex={color}
-                height={160}
-              />
-            </View>
-          )}
+          {notif.alertaCentroLatitud != null &&
+            notif.alertaCentroLongitud != null && (
+              <View style={{ paddingHorizontal: 12 }}>
+                <AlertMapView
+                  latitude={parseFloat(notif.alertaCentroLatitud)}
+                  longitude={parseFloat(notif.alertaCentroLongitud)}
+                  radiusKm={
+                    notif.alertaRadioKm
+                      ? parseFloat(notif.alertaRadioKm)
+                      : undefined
+                  }
+                  colorHex={color}
+                  height={160}
+                />
+              </View>
+            )}
         </View>
       )}
     </View>
@@ -122,25 +142,33 @@ function NotificacionCard({
 
 export function NotificationsFeedPage() {
   const palette = useAlertsPalette();
-  const { notifActivas, isLoading: switchLoading, toggleNotifications } =
-    useNotifications();
+  const {
+    notifActivas,
+    isLoading: switchLoading,
+    toggleNotifications,
+  } = useNotifications();
 
   const [notifs, setNotifs] = useState<Notificacion[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [userId, setUserId] = useState<number | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
   useEffect(() => {
-    void loadNotifications();
+    void loadData();
   }, []);
 
-  async function loadNotifications() {
+  async function loadData() {
     try {
       const uid = await getStoredUserId();
       setUserId(uid);
       if (!uid) return;
-      const response = await fetchUserNotifications(uid, 1, 10);
+      const [response, profile] = await Promise.all([
+        fetchUserNotifications(uid, 1, 10),
+        fetchUserProfile(uid),
+      ]);
       setNotifs(response.data);
+      setUserProfile(profile);
     } catch {
       // silently fail
     } finally {
@@ -195,6 +223,22 @@ export function NotificationsFeedPage() {
           }}
         />
       </DetailCard>
+
+      {userProfile?.latitud != null && userProfile?.longitud != null && (
+        <DetailCard style={{ gap: 10 }}>
+          <Text
+            className="font-ubuntu-bold text-[14px]"
+            style={{ color: palette.text }}
+          >
+            Tu ubicación registrada
+          </Text>
+          <AlertMapView
+            latitude={parseFloat(userProfile.latitud)}
+            longitude={parseFloat(userProfile.longitud)}
+            height={180}
+          />
+        </DetailCard>
+      )}
 
       <DetailCard style={{ gap: 10 }}>
         <View className="flex-row items-center justify-between">

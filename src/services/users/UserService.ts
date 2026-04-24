@@ -26,6 +26,24 @@ function generateUuid(): string {
   });
 }
 
+export type UserProfile = {
+  id: number;
+  latitud: string | null;
+  longitud: string | null;
+  precisionMetros: string | null;
+  ubicacionActualizadaEn: string | null;
+  notifActivas: boolean;
+  severidadMinima: SeveridadMinima;
+};
+
+export async function fetchUserProfile(userId: number): Promise<UserProfile | null> {
+  try {
+    return await apiRequest<UserProfile>(`/usuarios/${userId}`);
+  } catch {
+    return null;
+  }
+}
+
 export async function getOrCreateDeviceId(): Promise<string> {
   let id = await AsyncStorage.getItem(KEYS.deviceId);
   if (!id) {

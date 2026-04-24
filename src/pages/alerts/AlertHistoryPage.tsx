@@ -18,7 +18,9 @@ import { useAlertsPalette } from "@/components/alerts/AlertsUi";
 import { AlertMapView } from "@/components/map/AlertMapView";
 import { useAppConfig } from "@/context/AppConfigContext";
 import {
+  type AlertActualizacion,
   type Notificacion,
+  fetchAlertActualizaciones,
   fetchUserNotifications,
   markNotificationAsRead,
 } from "@/services/alerts/AlertService";
@@ -63,6 +65,16 @@ function NotificacionItem({
   const palette = useAlertsPalette();
   const accentColor = severityColor(notif.alertaNivelSeveridad, palette);
   const isRead = notif.leidaEn !== null;
+  const [actualizaciones, setActualizaciones] = useState<AlertActualizacion[]>([]);
+
+  useEffect(() => {
+    if (!isExpanded || !notif.alertaId) return;
+    let active = true;
+    void fetchAlertActualizaciones(notif.alertaId).then((data) => {
+      if (active) setActualizaciones(data);
+    });
+    return () => { active = false; };
+  }, [isExpanded, notif.alertaId]);
 
   return (
     <View
@@ -191,6 +203,81 @@ function NotificacionItem({
                 colorHex={accentColor}
                 height={180}
               />
+            </View>
+          )}
+
+          {actualizaciones.length > 0 && (
+            <View
+              className="mx-[14px] overflow-hidden rounded-[18px]"
+              style={{
+                backgroundColor: palette.cardBackground,
+                borderWidth: 1,
+                borderColor: palette.cardBorder,
+              }}
+            >
+              <View
+                className="px-4 py-3"
+                style={{ borderBottomWidth: 1, borderBottomColor: palette.cardBorder }}
+              >
+                <Text
+                  className="font-ubuntu-bold text-[13px]"
+                  style={{ color: palette.text }}
+                >
+                  Historial de actualizaciones
+                </Text>
+              </View>
+              {actualizaciones.map((upd, i) => (
+                <View key={upd.id ?? i}>
+                  {i > 0 && (
+                    <View style={{ height: 1, backgroundColor: palette.cardBorder }} />
+                  )}
+                  <View className="flex-row items-start gap-3 px-4 py-3">
+                    <View
+                      style={{
+                        marginTop: 4,
+                        width: 7,
+                        height: 7,
+                        borderRadius: 3.5,
+                        backgroundColor: accentColor,
+                      }}
+                    />
+                    <View className="flex-1 gap-[3px]">
+                      {upd.mensaje ? (
+                        <Text
+                          className="font-ubuntu-medium text-[13px] leading-[18px]"
+                          style={{ color: palette.text }}
+                        >
+                          {upd.mensaje}
+                        </Text>
+                      ) : null}
+                      {upd.estatusNuevo ? (
+                        <View className="flex-row items-center gap-1">
+                          <Text
+                            className="font-ubuntu-medium text-[11px]"
+                            style={{ color: palette.subtleText }}
+                          >
+                            Estatus:
+                          </Text>
+                          <Text
+                            className="font-ubuntu-bold text-[11px]"
+                            style={{ color: palette.subtleText }}
+                          >
+                            {upd.estatusNuevo.toUpperCase()}
+                          </Text>
+                        </View>
+                      ) : null}
+                      {upd.creadoEn ? (
+                        <Text
+                          className="font-ubuntu-medium text-[11px]"
+                          style={{ color: palette.subtleText, opacity: 0.6 }}
+                        >
+                          {formatDate(upd.creadoEn)}
+                        </Text>
+                      ) : null}
+                    </View>
+                  </View>
+                </View>
+              ))}
             </View>
           )}
         </View>

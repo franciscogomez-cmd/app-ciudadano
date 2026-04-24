@@ -17,7 +17,12 @@ import {
 import { useAlertsPalette } from "@/components/alerts/AlertsUi";
 import { AlertMapView } from "@/components/map/AlertMapView";
 import { useAppConfig } from "@/context/AppConfigContext";
-import { type Alert, fetchUserAlerts } from "@/services/alerts/AlertService";
+import {
+  type Alert,
+  type AlertActualizacion,
+  fetchAlertActualizaciones,
+  fetchLastAlert,
+} from "@/services/alerts/AlertService";
 import { getStoredUserId } from "@/services/users/UserService";
 
 function formatDate(dateStr: string): string {
@@ -47,186 +52,47 @@ function severityColor(
   }
 }
 
-function AlertItem({
-  alert,
-  isExpanded,
-  onToggle,
-}: {
-  alert: Alert;
-  isExpanded: boolean;
-  onToggle: () => void;
-}) {
-  const palette = useAlertsPalette();
-  const accentColor = severityColor(alert.nivelSeveridad, palette);
-
-  const hasMap =
-    alert.mapaVisible &&
-    alert.centroLatitud != null &&
-    alert.centroLongitud != null;
-
-  return (
-    <View
-      className="overflow-hidden rounded-[22px]"
-      style={{
-        backgroundColor: palette.cardBackground,
-        borderWidth: 1,
-        borderColor: palette.cardBorder,
-        shadowColor: palette.shadowAccent,
-        shadowOpacity: 0.1,
-        shadowRadius: 12,
-        shadowOffset: { width: 0, height: 5 },
-        elevation: 4,
-      }}
-    >
-      {/* Header */}
-      <Pressable
-        onPress={onToggle}
-        className="flex-row items-center gap-2 px-4 py-[10px]"
-        style={{ backgroundColor: accentColor }}
-      >
-        {alert.categoria.icono ? (
-          <Text style={{ fontSize: 15 }}>{alert.categoria.icono}</Text>
-        ) : null}
-        <Text
-          className="flex-1 font-ubuntu-bold text-[15px] leading-[18px] text-white"
-          numberOfLines={1}
-        >
-          {alert.titulo}
-        </Text>
-        <Ionicons
-          name={isExpanded ? "remove-circle-outline" : "add-circle-outline"}
-          size={28}
-          color="#FFFFFF"
-        />
-      </Pressable>
-
-      {/* Fecha siempre visible */}
-      <View className="px-4 pt-[10px] pb-3">
-        <Text
-          className="text-right font-ubuntu-medium text-[12px]"
-          style={{ color: palette.subtleText }}
-        >
-          {formatDate(alert.actualizadoEn)}
-        </Text>
-      </View>
-
-      {/* Acordeón */}
-      {isExpanded && (
-        <View
-          className="gap-3 pb-4"
-          style={{ borderTopWidth: 1, borderTopColor: palette.cardBorder }}
-        >
-          <View className="gap-2 px-4 pt-3">
-            <Text
-              className="font-ubuntu-medium text-[14px] leading-[18px]"
-              style={{ color: palette.text }}
-            >
-              Estatus:{" "}
-              <Text className="font-ubuntu-bold">
-                {alert.estatus.toUpperCase()}
-              </Text>
-            </Text>
-
-            <Text
-              className="font-ubuntu-medium text-[14px] leading-[20px]"
-              style={{ color: palette.text }}
-            >
-              {alert.descripcion}
-            </Text>
-
-            {/* Categoría */}
-            <View className="flex-row items-center gap-2">
-              <View
-                style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: accentColor }}
-              />
-              <Text
-                className="font-ubuntu-medium text-[12px]"
-                style={{ color: palette.subtleText }}
-              >
-                {alert.categoria.nombre}
-              </Text>
-            </View>
-          </View>
-
-          {/* Mapa */}
-          {hasMap && (
-            <View style={{ paddingHorizontal: 14 }}>
-              <AlertMapView
-                latitude={parseFloat(alert.centroLatitud!)}
-                longitude={parseFloat(alert.centroLongitud!)}
-                radiusKm={alert.radioKm ? parseFloat(alert.radioKm) : undefined}
-                colorHex={accentColor}
-                height={190}
-              />
-            </View>
-          )}
-
-          {/* Acciones */}
-          {alert.acciones.length > 0 && (
-            <View className="gap-[6px] px-4">
-              <Text
-                className="font-ubuntu-bold text-[13px]"
-                style={{ color: palette.text }}
-              >
-                Acciones recomendadas:
-              </Text>
-              {alert.acciones.map((accion, i) => (
-                <View key={i} className="flex-row items-start gap-2">
-                  <View
-                    style={{
-                      marginTop: 5,
-                      width: 6,
-                      height: 6,
-                      borderRadius: 3,
-                      backgroundColor: accentColor,
-                    }}
-                  />
-                  <Text
-                    className="flex-1 font-ubuntu-medium text-[12px] leading-[17px]"
-                    style={{ color: palette.subtleText }}
-                  >
-                    {accion}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          )}
-        </View>
-      )}
-    </View>
-  );
-}
-
 export function LatestNewsPage() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const palette = useAlertsPalette();
   const { activeTheme } = useAppConfig();
 
-  const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [alert, setAlert] = useState<Alert | null>(null);
+  const [actualizaciones, setActualizaciones] = useState<AlertActualizacion[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [expandedId, setExpandedId] = useState<number | null>(null);
 
   useEffect(() => {
-    void loadAlerts();
+    let active = true;
+    async function load() {
+      try {
+        const userId = await getStoredUserId();
+        if (!userId || !active) return;
+        const data = await fetchLastAlert(userId);
+        if (!active) return;
+        setAlert(data);
+        if (data?.id) {
+          const updates = await fetchAlertActualizaciones(data.id);
+          if (active) setActualizaciones(updates);
+        }
+      } catch {
+        // silently fail
+      } finally {
+        if (active) setIsLoading(false);
+      }
+    }
+    void load();
+    return () => { active = false; };
   }, []);
 
-  async function loadAlerts() {
-    try {
-      const userId = await getStoredUserId();
-      if (!userId) return;
-      const response = await fetchUserAlerts(userId, 1, 20);
-      setAlerts(response.data);
-    } catch {
-      // silently fail
-    } finally {
-      setIsLoading(false);
-    }
-  }
+  const accentColor = alert?.nivelSeveridad
+    ? severityColor(alert.nivelSeveridad, palette)
+    : palette.severity.informative;
 
-  function toggleExpanded(alertId: number) {
-    setExpandedId((prev) => (prev === alertId ? null : alertId));
-  }
+  const hasMap =
+    alert?.mapaVisible === true &&
+    alert.centroLatitud != null &&
+    alert.centroLongitud != null;
 
   return (
     <SafeAreaView
@@ -270,7 +136,7 @@ export function LatestNewsPage() {
             <View className="flex-1 items-center justify-center">
               <ActivityIndicator color={palette.severity.emergency} size="large" />
             </View>
-          ) : alerts.length === 0 ? (
+          ) : !alert ? (
             <View className="flex-1 items-center justify-center gap-2 px-8">
               <Ionicons name="newspaper-outline" size={48} color={palette.subtleText} />
               <Text
@@ -282,24 +148,219 @@ export function LatestNewsPage() {
             </View>
           ) : (
             <ScrollView
-              style={{ flex: 1, backgroundColor: palette.cardBackground }}
               showsVerticalScrollIndicator={false}
               contentContainerStyle={{
                 paddingTop: 26,
                 paddingHorizontal: 18,
                 paddingBottom: Math.max(insets.bottom + 34, 42),
-                gap: 18,
-                flexGrow: 1,
+                gap: 14,
               }}
             >
-              {alerts.map((alert) => (
-                <AlertItem
-                  key={alert.id}
-                  alert={alert}
-                  isExpanded={expandedId === alert.id}
-                  onToggle={() => toggleExpanded(alert.id)}
+              {/* Header de severidad */}
+              <View
+                className="overflow-hidden rounded-[22px]"
+                style={{
+                  backgroundColor: palette.cardBackground,
+                  borderWidth: 1,
+                  borderColor: palette.cardBorder,
+                  shadowColor: palette.shadowAccent,
+                  shadowOpacity: 0.1,
+                  shadowRadius: 12,
+                  shadowOffset: { width: 0, height: 5 },
+                  elevation: 4,
+                }}
+              >
+                {/* Header */}
+                <View
+                  className="flex-row items-center gap-2 px-4 py-[11px]"
+                  style={{ backgroundColor: accentColor }}
+                >
+                  {alert.categoria?.icono ? (
+                    <Text style={{ fontSize: 16 }}>{alert.categoria?.icono}</Text>
+                  ) : null}
+                  <Text
+                    className="flex-1 font-ubuntu-bold text-[15px] leading-[18px] text-white"
+                    numberOfLines={2}
+                  >
+                    {alert.titulo}
+                  </Text>
+                </View>
+
+                {/* Cuerpo siempre visible */}
+                <View className="gap-3 px-4 pt-3 pb-4">
+                  {/* Fecha y estatus */}
+                  <View className="flex-row items-center justify-between">
+                    <Text
+                      className="font-ubuntu-medium text-[12px]"
+                      style={{ color: palette.subtleText }}
+                    >
+                      {alert.actualizadoEn ? formatDate(alert.actualizadoEn) : ""}
+                    </Text>
+                    <View
+                      className="rounded-full px-3 py-[3px]"
+                      style={{ backgroundColor: accentColor + "22" }}
+                    >
+                      <Text
+                        className="font-ubuntu-bold text-[11px]"
+                        style={{ color: accentColor }}
+                      >
+                        {alert.estatus?.toUpperCase()}
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* Descripción */}
+                  <Text
+                    className="font-ubuntu-medium text-[14px] leading-[20px]"
+                    style={{ color: palette.text }}
+                  >
+                    {alert.descripcion}
+                  </Text>
+
+                  {/* Categoría */}
+                  <View className="flex-row items-center gap-2">
+                    <View
+                      style={{
+                        width: 7,
+                        height: 7,
+                        borderRadius: 3.5,
+                        backgroundColor: accentColor,
+                      }}
+                    />
+                    <Text
+                      className="font-ubuntu-medium text-[12px]"
+                      style={{ color: palette.subtleText }}
+                    >
+                      {alert.categoria?.nombre}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+              {/* Mapa */}
+              {hasMap && (
+                <AlertMapView
+                  latitude={parseFloat(alert.centroLatitud!)}
+                  longitude={parseFloat(alert.centroLongitud!)}
+                  radiusKm={alert.radioKm ? parseFloat(alert.radioKm) : undefined}
+                  colorHex={accentColor}
+                  height={210}
                 />
-              ))}
+              )}
+
+              {/* Acciones */}
+              {(alert.acciones?.length ?? 0) > 0 && (
+                <View
+                  className="rounded-[18px] gap-2 px-4 py-4"
+                  style={{
+                    backgroundColor: palette.cardBackground,
+                    borderWidth: 1,
+                    borderColor: palette.cardBorder,
+                    elevation: 3,
+                  }}
+                >
+                  <Text
+                    className="font-ubuntu-bold text-[13px]"
+                    style={{ color: palette.text }}
+                  >
+                    Acciones recomendadas:
+                  </Text>
+                  {(alert.acciones ?? []).map((accion, i) => (
+                    <View key={i} className="flex-row items-start gap-2">
+                      <View
+                        style={{
+                          marginTop: 5,
+                          width: 6,
+                          height: 6,
+                          borderRadius: 3,
+                          backgroundColor: accentColor,
+                        }}
+                      />
+                      <Text
+                        className="flex-1 font-ubuntu-medium text-[12px] leading-[17px]"
+                        style={{ color: palette.subtleText }}
+                      >
+                        {accion}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+              {/* Historial de actualizaciones */}
+              {actualizaciones.length > 0 && (
+                <View
+                  className="rounded-[18px] overflow-hidden"
+                  style={{
+                    backgroundColor: palette.cardBackground,
+                    borderWidth: 1,
+                    borderColor: palette.cardBorder,
+                  }}
+                >
+                  <View
+                    className="px-4 py-3"
+                    style={{ borderBottomWidth: 1, borderBottomColor: palette.cardBorder }}
+                  >
+                    <Text
+                      className="font-ubuntu-bold text-[13px]"
+                      style={{ color: palette.text }}
+                    >
+                      Historial de actualizaciones
+                    </Text>
+                  </View>
+                  {actualizaciones.map((upd, i) => (
+                    <View key={upd.id ?? i}>
+                      {i > 0 && (
+                        <View style={{ height: 1, backgroundColor: palette.cardBorder }} />
+                      )}
+                      <View className="flex-row items-start gap-3 px-4 py-3">
+                        <View
+                          style={{
+                            marginTop: 4,
+                            width: 7,
+                            height: 7,
+                            borderRadius: 3.5,
+                            backgroundColor: accentColor,
+                          }}
+                        />
+                        <View className="flex-1 gap-[3px]">
+                          {upd.mensaje ? (
+                            <Text
+                              className="font-ubuntu-medium text-[13px] leading-[18px]"
+                              style={{ color: palette.text }}
+                            >
+                              {upd.mensaje}
+                            </Text>
+                          ) : null}
+                          {upd.estatusNuevo ? (
+                            <View className="flex-row items-center gap-1">
+                              <Text
+                                className="font-ubuntu-medium text-[11px]"
+                                style={{ color: palette.subtleText }}
+                              >
+                                Estatus:
+                              </Text>
+                              <Text
+                                className="font-ubuntu-bold text-[11px]"
+                                style={{ color: palette.subtleText }}
+                              >
+                                {upd.estatusNuevo.toUpperCase()}
+                              </Text>
+                            </View>
+                          ) : null}
+                          {upd.creadoEn ? (
+                            <Text
+                              className="font-ubuntu-medium text-[11px]"
+                              style={{ color: palette.subtleText, opacity: 0.6 }}
+                            >
+                              {formatDate(upd.creadoEn)}
+                            </Text>
+                          ) : null}
+                        </View>
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              )}
             </ScrollView>
           )}
         </View>
