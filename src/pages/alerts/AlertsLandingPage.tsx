@@ -225,41 +225,40 @@ export function AlertsLandingPage() {
             />
           </View>
 
-          <View
-            className="gap-[14px] rounded-[12px] px-[18px] py-[18px]"
-            style={{
-              backgroundColor: palette.cardBackground,
-              shadowColor: palette.shadowColor,
-              shadowOpacity: 0.22,
-              shadowRadius: 4,
-              shadowOffset: { width: 0, height: 2 },
-              elevation: 5,
-            }}
-          >
-            <Text
-              className="font-ubuntu-medium text-[15px] leading-[22px]"
-              style={{ color: palette.panelText }}
+          {!locationGranted && (
+            <View
+              className="gap-[14px] rounded-[12px] px-[18px] py-[18px]"
+              style={{
+                backgroundColor: palette.cardBackground,
+                shadowColor: palette.shadowColor,
+                shadowOpacity: 0.22,
+                shadowRadius: 4,
+                shadowOffset: { width: 0, height: 2 },
+                elevation: 5,
+              }}
             >
-              {locationGranted
-                ? "Para recibir alertas, ingresa tu código postal."
-                : "Para recibir alertas, ingresa tu código postal o activa tu GPS."}
-            </Text>
+              {/* <Text
+                className="font-ubuntu-medium text-[15px] leading-[22px]"
+                style={{ color: palette.panelText }}
+              >
+                Para recibir alertas, ingresa tu código postal o activa tu GPS.
+              </Text> */}
 
-            <AlertActionButton
-              label="Usar código postal"
-              backgroundColor={palette.actionBackground}
-              textColor={palette.actionText}
-              onPress={() => router.push("/alertas/incidente")}
-            />
-            {!locationGranted && (
+              {/* <AlertActionButton
+                label="Usar código postal"
+                backgroundColor={palette.actionBackground}
+                textColor={palette.actionText}
+                onPress={() => router.push("/alertas/incidente")}
+              /> */}
+
               <AlertActionButton
                 label="Activar GPS"
                 backgroundColor={palette.actionBackground}
                 textColor={palette.actionText}
                 onPress={handleActivarGps}
               />
-            )}
-          </View>
+            </View>
+          )}
         </View>
       </View>
 
