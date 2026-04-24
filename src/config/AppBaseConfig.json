@@ -15,7 +15,7 @@
     }
   },
   "theme": {
-    "colorMode": "system",
+    "colorMode": "light",
     "light": {
       "primary": "#2D2B27",
       "secondary": "#81673B",
