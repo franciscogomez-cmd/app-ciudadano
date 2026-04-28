@@ -15,10 +15,10 @@ module.exports = ({ config }) => ({
   },
   android: {
     package: appBaseConfig.metadata.androidPackage,
+    icon: appBaseConfig.assets.appIcon,
     adaptiveIcon: {
       backgroundColor: appBaseConfig.assets.androidAdaptiveIcon.backgroundColor,
       foregroundImage: appBaseConfig.assets.androidAdaptiveIcon.foregroundImage,
-      backgroundImage: appBaseConfig.assets.androidAdaptiveIcon.backgroundImage,
       monochromeImage: appBaseConfig.assets.androidAdaptiveIcon.monochromeImage,
     },
     predictiveBackGestureEnabled: false,

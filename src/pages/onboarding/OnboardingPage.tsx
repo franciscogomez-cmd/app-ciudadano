@@ -90,17 +90,17 @@ function OnboardingArrowButton({
   const palette = useAlertsPalette();
 
   if (hidden) {
-    return <View className="h-[26px] w-[26px]" />;
+    return <View className="h-[38px] w-[38px]" />;
   }
 
   return (
     <Pressable
       accessibilityRole="button"
       onPress={onPress}
-      className="h-[26px] w-[26px]"
+      className="h-[38px] w-[38px]"
       style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
     >
-      <Svg width={26} height={26} viewBox="0 0 26 26" fill="none">
+      <Svg width={38} height={38} viewBox="0 0 26 26" fill="none">
         <Circle cx={13} cy={13} r={13} fill={palette.progressActive} />
         {direction === "forward" ? (
           <>
@@ -326,6 +326,40 @@ export function OnboardingPage() {
               </View>
 
               <View
+                style={{
+                  position: "absolute",
+                  top: height / 2 - 19,
+                  left: 24,
+                  right: 24,
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  zIndex: 10,
+                }}
+              >
+                <OnboardingArrowButton
+                  direction="back"
+                  hidden={index === 0}
+                  onPress={() => {
+                    if (index > 0) {
+                      goToIndex(index - 1);
+                    }
+                  }}
+                />
+
+                <OnboardingArrowButton
+                  direction="forward"
+                  onPress={() => {
+                    if (index === slides.length - 1) {
+                      router.replace("/alertas");
+                      return;
+                    }
+
+                    goToIndex(index + 1);
+                  }}
+                />
+              </View>
+
+              <View
                 className="rounded-t-[52px] px-6 pt-8"
                 style={{
                   width: slideWidth,
@@ -365,30 +399,6 @@ export function OnboardingPage() {
                   total={slides.length}
                   activeIndex={activeIndex}
                 />
-
-                <View className="mt-5 flex-row items-center justify-between">
-                  <OnboardingArrowButton
-                    direction="back"
-                    hidden={index === 0}
-                    onPress={() => {
-                      if (index > 0) {
-                        goToIndex(index - 1);
-                      }
-                    }}
-                  />
-
-                  <OnboardingArrowButton
-                    direction="forward"
-                    onPress={() => {
-                      if (index === slides.length - 1) {
-                        router.replace("/alertas");
-                        return;
-                      }
-
-                      goToIndex(index + 1);
-                    }}
-                  />
-                </View>
               </View>
             </View>
           );

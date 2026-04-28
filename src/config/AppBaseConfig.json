@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "name": "app-ciudadano",
+    "name": "Ciudadano",
     "slug": "app-ciudadano",
     "scheme": "appciudadano",
     "androidPackage": "com.sg.ciudadano",
@@ -9,7 +9,7 @@
     "orientation": "portrait"
   },
   "branding": {
-    "appName": "app-ciudadano",
+    "appName": "Ciudadano",
     "logo": {
       "kind": "none"
     }
@@ -58,13 +58,12 @@
   },
   "assets": {
     "appIcon": "./assets/images/icon.png",
-    "iosIcon": "./assets/expo.icon",
+    "iosIcon": "./assets/images/icon.png",
     "webFavicon": "./assets/images/favicon.png",
     "androidAdaptiveIcon": {
       "backgroundColor": "#D9D9D9",
-      "foregroundImage": "./assets/images/android-icon-foreground.png",
-      "backgroundImage": "./assets/images/android-icon-background.png",
-      "monochromeImage": "./assets/images/android-icon-monochrome.png"
+      "foregroundImage": "./assets/images/icon.png",
+      "monochromeImage": "./assets/images/icon.png"
     },
     "splash": {
       "image": "./assets/images/splash-icon.png",

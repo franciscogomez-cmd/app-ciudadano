@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//Users/marcodelgado/.nvm/versions/node/**)",
+      "Bash(fnm list *)"
+    ]
+  }
+}
