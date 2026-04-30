@@ -2,7 +2,13 @@
   "permissions": {
     "allow": [
       "Read(//Users/marcodelgado/.nvm/versions/node/**)",
-      "Bash(fnm list *)"
+      "Bash(fnm list *)",
+      "Bash(git mv *)",
+      "Bash(git -C /Users/marcodelgado/Documents/SG/expo-configurable-starter mv src/Global.css src/global_tmp.css)",
+      "Bash(git -C /Users/marcodelgado/Documents/SG/expo-configurable-starter mv src/global_tmp.css src/global.css)",
+      "Bash(mv /Users/marcodelgado/Documents/SG/expo-configurable-starter/src/Global.css /Users/marcodelgado/Documents/SG/expo-configurable-starter/src/_global_tmp.css)",
+      "Bash(mv /Users/marcodelgado/Documents/SG/expo-configurable-starter/src/_global_tmp.css /Users/marcodelgado/Documents/SG/expo-configurable-starter/src/global.css)",
+      "Bash(git -C /Users/marcodelgado/Documents/SG/expo-configurable-starter status)"
     ]
   }
 }
