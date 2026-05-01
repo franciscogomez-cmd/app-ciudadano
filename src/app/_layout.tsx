@@ -11,12 +11,14 @@ import { OneSignal } from "react-native-onesignal";
 
 import { AppConfigProvider, useAppConfig } from "@/context/AppConfigContext";
 import { NotificationProvider } from "@/context/NotificationContext";
+import { usePermissionSync } from "@/hooks/usePermissionSync";
 
 OneSignal.Debug.setLogLevel(6);
 OneSignal.initialize(process.env.EXPO_PUBLIC_ONESIGNAL_APP_ID ?? "");
 
 function RootNavigator() {
   const { activeTheme, config, resolvedColorMode } = useAppConfig();
+  usePermissionSync();
   const { setColorScheme } = useNativeWindColorScheme();
 
   useEffect(() => {

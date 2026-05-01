@@ -36,9 +36,46 @@ export type UserProfile = {
   severidadMinima: SeveridadMinima;
 };
 
+export type DeviceProfile = {
+  id: number;
+  imei: string | null;
+  deviceId: string;
+  tokenPush: string | null;
+  plataforma: string;
+  versionApp: string | null;
+  modeloDispositivo: string | null;
+  sistemaOperativo: string | null;
+  latitud: string | null;
+  longitud: string | null;
+  precisionMetros: string | null;
+  ubicacionActualizadaEn: string | null;
+  codigoPostal: string | null;
+  notifActivas: boolean;
+  gpsActivo: boolean;
+  notifMeteorologicas: boolean;
+  notifUltimaHora: boolean;
+  notifVialidad: boolean;
+  notifServicios: boolean;
+  silencioInicio: string | null;
+  silencioFin: string | null;
+  severidadMinima: SeveridadMinima;
+  creadoEn: string;
+  actualizadoEn: string;
+  eliminadoEn: string | null;
+  zonasSuscritas: unknown[];
+};
+
 export async function fetchUserProfile(userId: number): Promise<UserProfile | null> {
   try {
     return await apiRequest<UserProfile>(`/usuarios/${userId}`);
+  } catch {
+    return null;
+  }
+}
+
+export async function getUserByDevice(deviceId: string): Promise<DeviceProfile | null> {
+  try {
+    return await apiRequest<DeviceProfile>(`/usuarios/by-device/${deviceId}`);
   } catch {
     return null;
   }
@@ -117,11 +154,10 @@ export async function updateUserLocation(
   userId: number,
   latitud: number,
   longitud: number,
-  precisionMetros: number,
 ): Promise<void> {
   await apiRequest(`/usuarios/${userId}/ubicacion`, {
     method: 'PATCH',
-    body: { latitud, longitud, precisionMetros },
+    body: { latitud, longitud },
   });
 }
 

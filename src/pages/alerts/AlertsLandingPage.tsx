@@ -2,8 +2,8 @@ import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
 import { Href, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React, { useEffect, useState } from "react";
-import { Image, Pressable, Text, View } from "react-native";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { AppState, type AppStateStatus, Image, Linking, Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAlertsPalette } from "@/components/alerts/AlertsUi";
@@ -118,21 +118,68 @@ export function AlertsLandingPage() {
   const palette = useAlertsPalette();
   const { activeTheme } = useAppConfig();
   const [locationGranted, setLocationGranted] = useState(false);
+  // true = el OS ya no mostrará diálogo, hay que ir a Configuración
+  const [locationBlocked, setLocationBlocked] = useState(false);
+  const appState = useRef(AppState.currentState);
 
-  useEffect(() => {
-    Location.getForegroundPermissionsAsync().then(({ status }) => {
-      const granted = status === "granted";
-      setLocationGranted(granted);
-      if (granted) void sendLocation();
-    });
+  const checkLocationStatus = useCallback(async () => {
+    const { status, canAskAgain } = await Location.getForegroundPermissionsAsync();
+    if (status === "granted") {
+      setLocationGranted(true);
+      setLocationBlocked(false);
+      void sendLocation();
+    } else {
+      setLocationGranted(false);
+      // canAskAgain=false → iOS después del 1er rechazo, Android después del 2do o "No volver a preguntar"
+      setLocationBlocked(!canAskAgain);
+    }
   }, []);
 
+  // Verificar permisos al montar
+  useEffect(() => {
+    void checkLocationStatus();
+  }, [checkLocationStatus]);
+
+  // Re-verificar cuando el usuario regresa de Configuración del sistema
+  useEffect(() => {
+    const sub = AppState.addEventListener("change", (next: AppStateStatus) => {
+      if (appState.current.match(/inactive|background/) && next === "active") {
+        void checkLocationStatus();
+      }
+      appState.current = next;
+    });
+    return () => sub.remove();
+  }, [checkLocationStatus]);
+
   async function handleActivarGps() {
-    const { status } = await Location.requestForegroundPermissionsAsync();
-    const granted = status === "granted";
-    setLocationGranted(granted);
-    if (granted) {
+    const { status, canAskAgain } = await Location.getForegroundPermissionsAsync();
+
+    if (status === "granted") {
+      // Ya tiene permiso (edge case: estado cambió entre renders)
+      setLocationGranted(true);
       void sendLocation();
+      return;
+    }
+
+    if (!canAskAgain) {
+      // Android: negó 2 veces o marcó "No preguntar de nuevo"
+      // iOS: negó la única vez que se puede preguntar
+      // → única opción es abrir Configuración del sistema
+      void Linking.openSettings();
+      return;
+    }
+
+    // Puede mostrar el diálogo del sistema
+    const { status: newStatus, canAskAgain: stillCan } =
+      await Location.requestForegroundPermissionsAsync();
+
+    if (newStatus === "granted") {
+      setLocationGranted(true);
+      setLocationBlocked(false);
+      void sendLocation();
+    } else {
+      // Negó en el diálogo → la próxima vez irá directo a Configuración
+      setLocationBlocked(!stillCan);
     }
   }
 
@@ -147,7 +194,6 @@ export function AlertsLandingPage() {
         userId,
         pos.coords.latitude,
         pos.coords.longitude,
-        pos.coords.accuracy ?? 0,
       );
     } catch {
       // no crítico
@@ -252,7 +298,7 @@ export function AlertsLandingPage() {
               /> */}
 
               <AlertActionButton
-                label="Activar GPS"
+                label={locationBlocked ? "Ir a Configuración" : "Activar GPS"}
                 backgroundColor={palette.actionBackground}
                 textColor={palette.actionText}
                 onPress={handleActivarGps}

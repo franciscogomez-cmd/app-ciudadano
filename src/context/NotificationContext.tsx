@@ -213,10 +213,24 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         await requestPermissionAndRegister();
         return;
       }
-      if (!isPermissionGranted) {
-        openSystemSettings();
-        return;
+
+      let permissionOk = isPermissionGranted;
+      if (!permissionOk) {
+        // Intentar obtener permiso antes de mandar al usuario a Settings.
+        // En Android <13 requestPermission() devuelve true sin diálogo.
+        // En Android 13+ / iOS muestra el diálogo si canAskAgain=true.
+        const granted = await OneSignal.Notifications.requestPermission(true);
+        setIsPermissionGranted(granted);
+        permissionOk = granted;
+
+        if (!granted) {
+          // Ya no puede mostrar diálogo → única opción es Settings
+          openSystemSettings();
+          return;
+        }
+        OneSignal.User.pushSubscription.optIn();
       }
+
       setNotifActivas(true);
       await updatePreferences(userIdRef.current!, { notifActivas: true }, accessTokenRef.current);
     } else {
