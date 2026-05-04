@@ -8,7 +8,16 @@
       "Bash(git -C /Users/marcodelgado/Documents/SG/expo-configurable-starter mv src/global_tmp.css src/global.css)",
       "Bash(mv /Users/marcodelgado/Documents/SG/expo-configurable-starter/src/Global.css /Users/marcodelgado/Documents/SG/expo-configurable-starter/src/_global_tmp.css)",
       "Bash(mv /Users/marcodelgado/Documents/SG/expo-configurable-starter/src/_global_tmp.css /Users/marcodelgado/Documents/SG/expo-configurable-starter/src/global.css)",
-      "Bash(git -C /Users/marcodelgado/Documents/SG/expo-configurable-starter status)"
+      "Bash(git -C /Users/marcodelgado/Documents/SG/expo-configurable-starter status)",
+      "Bash(echo \"Build corriendo en background PID: $!\")",
+      "Bash(nvm --version)",
+      "Bash(nvm list *)",
+      "Read(//Users/marcodelgado/**)",
+      "Bash(pkill -f GradleDaemon)",
+      "Bash(/Users/marcodelgado/Documents/SG/expo-configurable-starter/android/gradlew --stop --project-dir /Users/marcodelgado/Documents/SG/expo-configurable-starter/android)"
+    ],
+    "additionalDirectories": [
+      "/Users/marcodelgado"
     ]
   }
 }

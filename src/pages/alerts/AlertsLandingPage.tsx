@@ -3,7 +3,16 @@ import * as Location from "expo-location";
 import { Href, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { AppState, type AppStateStatus, Image, Linking, Pressable, Text, View } from "react-native";
+import {
+  AppState,
+  type AppStateStatus,
+  Image,
+  Linking,
+  Pressable,
+  Text,
+  View,
+} from "react-native";
+import Toast from "react-native-toast-message";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAlertsPalette } from "@/components/alerts/AlertsUi";
@@ -18,6 +27,15 @@ import {
   getStoredUserId,
   updateUserLocation,
 } from "@/services/users/UserService";
+
+// Estados posibles del flujo de ubicación
+type LocationStatus =
+  | "checking"         // verificando permisos al montar / al volver de Settings
+  | "loading"          // guardando ubicación en el backend
+  | "success"          // ubicación guardada correctamente
+  | "error_permission" // sin permiso, el OS puede mostrar diálogo
+  | "blocked"          // sin permiso, negado permanente → solo Settings
+  | "error_api";       // permiso OK pero el endpoint falló → reintentar
 
 type AlertFeatureCardProps = {
   icon: React.ReactNode;
@@ -70,14 +88,16 @@ function AlertFeatureCard({
   );
 }
 
-function AlertActionButton({
+function ActionButton({
   label,
   onPress,
+  disabled,
   backgroundColor,
   textColor,
 }: {
   label: string;
   onPress?: () => void;
+  disabled?: boolean;
   backgroundColor: string;
   textColor: string;
 }) {
@@ -85,24 +105,27 @@ function AlertActionButton({
 
   return (
     <View
-      className="h-[58px] rounded-[14px]"
+      className="h-[50px] rounded-[14px]"
       style={{
         backgroundColor,
+        opacity: disabled ? 0.6 : 1,
         shadowColor: palette.shadowColor,
-        shadowOpacity: 0.28,
+        shadowOpacity: disabled ? 0 : 0.28,
         shadowRadius: 8,
         shadowOffset: { width: 0, height: 4 },
-        elevation: 6,
+        elevation: disabled ? 0 : 6,
       }}
     >
       <Pressable
         accessibilityRole="button"
-        onPress={onPress}
+        onPress={disabled ? undefined : onPress}
         className="flex-1 items-center justify-center rounded-[14px]"
-        style={({ pressed }) => ({ opacity: pressed ? 0.88 : 1 })}
+        style={({ pressed }) => ({
+          opacity: disabled ? 1 : pressed ? 0.88 : 1,
+        })}
       >
         <Text
-          className="font-ubuntu-bold text-[16px] leading-[20px]"
+          className="font-ubuntu-bold text-[15px] leading-[20px]"
           style={{ color: textColor }}
         >
           {label}
@@ -112,99 +135,196 @@ function AlertActionButton({
   );
 }
 
+function LocationCard({
+  status,
+  onActivar,
+  onReintentar,
+  onActualizar,
+}: {
+  status: LocationStatus;
+  onActivar: () => void;
+  onReintentar: () => void;
+  onActualizar: () => void;
+}) {
+  const palette = useAlertsPalette();
+
+  if (status === "checking" || status === "loading") return null;
+
+  return (
+    <View
+      className="rounded-[16px] px-[18px] py-[16px] gap-[12px]"
+      style={{
+        backgroundColor: palette.cardBackground,
+        shadowColor: palette.shadowColor,
+        shadowOpacity: 0.22,
+        shadowRadius: 4,
+        shadowOffset: { width: 0, height: 2 },
+        elevation: 5,
+      }}
+    >
+      {/* Éxito */}
+      {status === "success" && (
+        <>
+          <View className="flex-row items-center gap-2">
+            <Ionicons name="checkmark-circle" size={20} color={palette.switchActive} />
+            <Text
+              className="font-ubuntu-bold text-[14px] leading-[18px]"
+              style={{ color: palette.text }}
+            >
+              Ubicación guardada
+            </Text>
+          </View>
+          <ActionButton
+            label="Actualizar ubicación"
+            backgroundColor={palette.actionBackground}
+            textColor={palette.actionText}
+            onPress={onActualizar}
+          />
+        </>
+      )}
+
+      {/* Sin permiso — puede pedir diálogo */}
+      {status === "error_permission" && (
+        <ActionButton
+          label="Activar GPS"
+          backgroundColor={palette.actionBackground}
+          textColor={palette.actionText}
+          onPress={onActivar}
+        />
+      )}
+
+      {/* Sin permiso — negado permanente */}
+      {status === "blocked" && (
+        <>
+          <Text
+            className="font-ubuntu-medium text-[13px] leading-[18px]"
+            style={{ color: palette.subtleText }}
+          >
+            Activa la ubicación desde Configuración del sistema para recibir alertas en tu zona.
+          </Text>
+          <ActionButton
+            label="Ir a Configuración"
+            backgroundColor={palette.actionBackground}
+            textColor={palette.actionText}
+            onPress={onActivar}
+          />
+        </>
+      )}
+
+      {/* Error del API */}
+      {status === "error_api" && (
+        <>
+          <View className="flex-row items-center gap-2">
+            <Ionicons name="warning-outline" size={18} color={palette.severity?.preventive ?? palette.subtleText} />
+            <Text
+              className="font-ubuntu-medium text-[13px] leading-[18px] flex-1"
+              style={{ color: palette.subtleText }}
+            >
+              No se pudo guardar la ubicación.
+            </Text>
+          </View>
+          <ActionButton
+            label="Reintentar"
+            backgroundColor={palette.actionBackground}
+            textColor={palette.actionText}
+            onPress={onReintentar}
+          />
+        </>
+      )}
+    </View>
+  );
+}
+
 export function AlertsLandingPage() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const palette = useAlertsPalette();
   const { activeTheme } = useAppConfig();
-  const [locationGranted, setLocationGranted] = useState(false);
-  // true = el OS ya no mostrará diálogo, hay que ir a Configuración
-  const [locationBlocked, setLocationBlocked] = useState(false);
+  const [locationStatus, setLocationStatus] = useState<LocationStatus>("checking");
   const appState = useRef(AppState.currentState);
 
-  const checkLocationStatus = useCallback(async () => {
-    const { status, canAskAgain } = await Location.getForegroundPermissionsAsync();
-    if (status === "granted") {
-      setLocationGranted(true);
-      setLocationBlocked(false);
-      void sendLocation();
-    } else {
-      setLocationGranted(false);
-      // canAskAgain=false → iOS después del 1er rechazo, Android después del 2do o "No volver a preguntar"
-      setLocationBlocked(!canAskAgain);
-    }
-  }, []);
-
-  // Verificar permisos al montar
-  useEffect(() => {
-    void checkLocationStatus();
-  }, [checkLocationStatus]);
-
-  // Re-verificar cuando el usuario regresa de Configuración del sistema
-  useEffect(() => {
-    const sub = AppState.addEventListener("change", (next: AppStateStatus) => {
-      if (appState.current.match(/inactive|background/) && next === "active") {
-        void checkLocationStatus();
-      }
-      appState.current = next;
+  // Intenta guardar la ubicación en el backend. Actualiza el estado según resultado.
+  const attemptSave = useCallback(async () => {
+    setLocationStatus("loading");
+    Toast.show({
+      type: "info",
+      text1: "Guardando ubicación...",
+      autoHide: false,
+      position: "top",
     });
-    return () => sub.remove();
-  }, [checkLocationStatus]);
-
-  async function handleActivarGps() {
-    const { status, canAskAgain } = await Location.getForegroundPermissionsAsync();
-
-    if (status === "granted") {
-      // Ya tiene permiso (edge case: estado cambió entre renders)
-      setLocationGranted(true);
-      void sendLocation();
-      return;
-    }
-
-    if (!canAskAgain) {
-      // Android: negó 2 veces o marcó "No preguntar de nuevo"
-      // iOS: negó la única vez que se puede preguntar
-      // → única opción es abrir Configuración del sistema
-      void Linking.openSettings();
-      return;
-    }
-
-    // Puede mostrar el diálogo del sistema
-    const { status: newStatus, canAskAgain: stillCan } =
-      await Location.requestForegroundPermissionsAsync();
-
-    if (newStatus === "granted") {
-      setLocationGranted(true);
-      setLocationBlocked(false);
-      void sendLocation();
-    } else {
-      // Negó en el diálogo → la próxima vez irá directo a Configuración
-      setLocationBlocked(!stillCan);
-    }
-  }
-
-  async function sendLocation() {
     try {
       const [userId, pos] = await Promise.all([
         getStoredUserId(),
         Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }),
       ]);
-      if (!userId) return;
-      await updateUserLocation(
-        userId,
-        pos.coords.latitude,
-        pos.coords.longitude,
-      );
+      if (!userId) {
+        Toast.show({ type: "error", text1: "No se pudo guardar la ubicación", position: "top" });
+        setLocationStatus("error_api");
+        return;
+      }
+      await updateUserLocation(userId, pos.coords.latitude, pos.coords.longitude);
+      Toast.show({ type: "success", text1: "Ubicación guardada", position: "top" });
+      setLocationStatus("success");
     } catch {
-      // no crítico
+      Toast.show({ type: "error", text1: "No se pudo guardar la ubicación", position: "top" });
+      setLocationStatus("error_api");
+    }
+  }, []);
+
+  // Verifica permisos y lanza el flujo correcto según el estado del OS.
+  const checkAndSync = useCallback(async () => {
+    setLocationStatus("checking");
+    const { status, canAskAgain } = await Location.getForegroundPermissionsAsync();
+
+    if (status === "granted") {
+      await attemptSave();
+      return;
+    }
+
+    setLocationStatus(canAskAgain ? "error_permission" : "blocked");
+  }, [attemptSave]);
+
+  useEffect(() => {
+    void checkAndSync();
+  }, [checkAndSync]);
+
+  // Re-verificar cuando el usuario regresa de Configuración del sistema
+  useEffect(() => {
+    const sub = AppState.addEventListener("change", (next: AppStateStatus) => {
+      if (appState.current.match(/inactive|background/) && next === "active") {
+        void checkAndSync();
+      }
+      appState.current = next;
+    });
+    return () => sub.remove();
+  }, [checkAndSync]);
+
+  // Botón "Activar GPS" / "Ir a Configuración"
+  async function handleActivar() {
+    const { status, canAskAgain } = await Location.getForegroundPermissionsAsync();
+
+    if (status === "granted") {
+      await attemptSave();
+      return;
+    }
+
+    if (!canAskAgain) {
+      void Linking.openSettings();
+      return;
+    }
+
+    const { status: newStatus, canAskAgain: stillCan } =
+      await Location.requestForegroundPermissionsAsync();
+
+    if (newStatus === "granted") {
+      await attemptSave();
+    } else {
+      setLocationStatus(stillCan ? "error_permission" : "blocked");
     }
   }
 
   return (
-    <View
-      className="flex-1"
-      style={{ backgroundColor: palette.shellBackground }}
-    >
+    <View className="flex-1" style={{ backgroundColor: palette.shellBackground }}>
       <StatusBar style={activeTheme.statusBarStyle} />
 
       <View
@@ -271,40 +391,12 @@ export function AlertsLandingPage() {
             />
           </View>
 
-          {!locationGranted && (
-            <View
-              className="gap-[14px] rounded-[12px] px-[18px] py-[18px]"
-              style={{
-                backgroundColor: palette.cardBackground,
-                shadowColor: palette.shadowColor,
-                shadowOpacity: 0.22,
-                shadowRadius: 4,
-                shadowOffset: { width: 0, height: 2 },
-                elevation: 5,
-              }}
-            >
-              {/* <Text
-                className="font-ubuntu-medium text-[15px] leading-[22px]"
-                style={{ color: palette.panelText }}
-              >
-                Para recibir alertas, ingresa tu código postal o activa tu GPS.
-              </Text> */}
-
-              {/* <AlertActionButton
-                label="Usar código postal"
-                backgroundColor={palette.actionBackground}
-                textColor={palette.actionText}
-                onPress={() => router.push("/alertas/incidente")}
-              /> */}
-
-              <AlertActionButton
-                label={locationBlocked ? "Ir a Configuración" : "Activar GPS"}
-                backgroundColor={palette.actionBackground}
-                textColor={palette.actionText}
-                onPress={handleActivarGps}
-              />
-            </View>
-          )}
+          <LocationCard
+            status={locationStatus}
+            onActivar={handleActivar}
+            onReintentar={attemptSave}
+            onActualizar={attemptSave}
+          />
         </View>
       </View>
 
