@@ -4,6 +4,7 @@ import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Image,
   Pressable,
   ScrollView,
   Text,
@@ -156,7 +157,7 @@ export function LatestNewsPage() {
                 gap: 14,
               }}
             >
-              {/* Header de severidad */}
+              {/* Card principal */}
               <View
                 className="overflow-hidden rounded-[22px]"
                 style={{
@@ -170,13 +171,13 @@ export function LatestNewsPage() {
                   elevation: 4,
                 }}
               >
-                {/* Header */}
+                {/* Header de color */}
                 <View
                   className="flex-row items-center gap-2 px-4 py-[11px]"
                   style={{ backgroundColor: accentColor }}
                 >
                   {alert.categoria?.icono ? (
-                    <Text style={{ fontSize: 16 }}>{alert.categoria?.icono}</Text>
+                    <Text style={{ fontSize: 16 }}>{alert.categoria.icono}</Text>
                   ) : null}
                   <Text
                     className="flex-1 font-ubuntu-bold text-[15px] leading-[18px] text-white"
@@ -186,7 +187,18 @@ export function LatestNewsPage() {
                   </Text>
                 </View>
 
-                {/* Cuerpo siempre visible */}
+                {/* Imagen completa */}
+                {alert.imagenUrl ? (
+                  <View style={{ backgroundColor: accentColor + "18" }}>
+                    <Image
+                      source={{ uri: alert.imagenUrl }}
+                      style={{ width: "100%", aspectRatio: 16 / 9 }}
+                      resizeMode="contain"
+                    />
+                  </View>
+                ) : null}
+
+                {/* Cuerpo */}
                 <View className="gap-3 px-4 pt-3 pb-4">
                   {/* Fecha y estatus */}
                   <View className="flex-row items-center justify-between">
