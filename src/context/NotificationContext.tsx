@@ -3,6 +3,8 @@ import { Linking } from 'react-native';
 import { OneSignal, type PushSubscriptionChangedState } from 'react-native-onesignal';
 
 import {
+  clearStoredUser,
+  fetchUserProfile,
   getStoredAccessToken,
   getStoredNotifActivas,
   getStoredTokenPush,
@@ -74,8 +76,18 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
       console.log('[Notifications] AsyncStorage ->', { userId, storedTokenPush, storedNotifActivas, hasAccessToken: !!accessToken });
 
-      userIdRef.current = userId;
-      accessTokenRef.current = accessToken;
+      let resolvedUserId = userId;
+      if (userId) {
+        const profile = await fetchUserProfile(userId);
+        if (!profile) {
+          console.log('[Notifications] Usuario', userId, 'no existe en backend — limpiando storage');
+          await clearStoredUser();
+          resolvedUserId = null;
+        }
+      }
+
+      userIdRef.current = resolvedUserId;
+      accessTokenRef.current = resolvedUserId ? accessToken : null;
 
       // Consultamos ambos en paralelo — subscriptionId es la fuente de verdad:
       // si OneSignal ya tiene ID, el usuario tiene permiso y está suscrito.
@@ -91,15 +103,15 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       // llamamos requestPermission para obtenerlo o confirmarlo.
       // En Android, si ya fue concedido retorna true sin mostrar diálogo.
       let actualPermission = hasPermission;
-      if (!hasPermission && userId) {
+      if (!hasPermission && resolvedUserId) {
         console.log('[Notifications] Solicitando confirmación de permiso Android...');
         actualPermission = await OneSignal.Notifications.requestPermission(true);
         console.log('[Notifications] actualPermission ->', actualPermission);
       }
 
       setIsPermissionGranted(actualPermission);
-      setIsRegistered(userId !== null);
-      setNotifActivas(userId !== null && storedNotifActivas && actualPermission);
+      setIsRegistered(resolvedUserId !== null);
+      setNotifActivas(resolvedUserId !== null && storedNotifActivas && actualPermission);
 
       if (actualPermission) {
         const optedIn = await OneSignal.User.pushSubscription.getOptedInAsync();
@@ -112,17 +124,17 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         console.log('[Notifications] FCM token ->', token ? `${token.slice(0, 20)}...` : 'NULL');
       }
 
-      if (!userId && subscriptionId) {
+      if (!resolvedUserId && subscriptionId) {
         console.log('[Notifications] subscriptionId disponible sin registro — registrando...');
         await doRegisterWithSubscription();
-      } else if (!userId && actualPermission) {
+      } else if (!resolvedUserId && actualPermission) {
         console.log('[Notifications] Permiso otorgado sin subscriptionId aún — esperando SDK...');
         await doRegisterWithSubscription();
-      } else if (userId && subscriptionId) {
+      } else if (resolvedUserId && subscriptionId) {
         console.log('[Notifications] Ya registrado, verificando si el token cambió...');
         if (storedTokenPush && subscriptionId !== storedTokenPush) {
           try {
-            await updateTokenPush(userId, subscriptionId, accessToken);
+            await updateTokenPush(resolvedUserId, subscriptionId, resolvedUserId ? accessToken : null);
             console.log('[Notifications] Token actualizado en backend');
           } catch {
             console.log('[Notifications] Error actualizando token (no crítico)');

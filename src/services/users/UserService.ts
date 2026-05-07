@@ -99,6 +99,10 @@ export async function getStoredAccessToken(): Promise<string | null> {
   return AsyncStorage.getItem(KEYS.accessToken);
 }
 
+export async function clearStoredUser(): Promise<void> {
+  await AsyncStorage.multiRemove([KEYS.userId, KEYS.accessToken, KEYS.tokenPush, KEYS.notifActivas]);
+}
+
 export async function getStoredTokenPush(): Promise<string | null> {
   return AsyncStorage.getItem(KEYS.tokenPush);
 }
