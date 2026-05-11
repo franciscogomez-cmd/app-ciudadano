@@ -1,7 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Constants from 'expo-constants';
+import * as Device from 'expo-device';
 import { Platform } from 'react-native';
 
-import { apiRequest } from '@/services/core/ApiClient';
+import { ApiError, apiRequest } from '@/services/core/ApiClient';
 
 export type SeveridadMinima = 'informativa' | 'preventiva' | 'emergencia';
 
@@ -68,8 +70,9 @@ export type DeviceProfile = {
 export async function fetchUserProfile(userId: number): Promise<UserProfile | null> {
   try {
     return await apiRequest<UserProfile>(`/usuarios/${userId}`);
-  } catch {
-    return null;
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 404) return null;
+    throw e;
   }
 }
 
@@ -117,17 +120,38 @@ export async function registerUser(
 ): Promise<{ userId: number; accessToken: string | null }> {
   const deviceId = await getOrCreateDeviceId();
   const plataforma = Platform.OS === 'android' ? 'android' : 'ios';
+  const versionApp = Constants.expoConfig?.version ?? undefined;
+  const modeloDispositivo = Device.modelName ?? undefined;
+  const sistemaOperativo = Device.osVersion
+    ? `${Platform.OS === 'android' ? 'Android' : 'iOS'} ${Device.osVersion}`
+    : undefined;
 
-  const user = await apiRequest<RegisteredUser>('/usuarios', {
-    method: 'POST',
-    body: {
-      deviceId,
-      plataforma,
-      tokenPush,
-      notifActivas: true,
-      severidadMinima: 'informativa' satisfies SeveridadMinima,
-    },
-  });
+  const requestBody = {
+    deviceId,
+    plataforma,
+    tokenPush,
+    notifActivas: true,
+    severidadMinima: 'informativa' satisfies SeveridadMinima,
+    versionApp,
+    modeloDispositivo,
+    sistemaOperativo,
+  };
+  console.log('[UserService] POST /usuarios ->', process.env.EXPO_PUBLIC_API_BASE_URL + '/usuarios');
+  console.log('[UserService] POST /usuarios body ->', JSON.stringify(requestBody));
+
+  let user: RegisteredUser;
+  try {
+    user = await apiRequest<RegisteredUser>('/usuarios', {
+      method: 'POST',
+      body: requestBody,
+    });
+  } catch (e) {
+    if (!(e instanceof ApiError && e.status === 409)) throw e;
+    // Conflict: deviceId or tokenPush already registered — recover existing user
+    const existing = await getUserByDevice(deviceId);
+    if (!existing) throw new Error('Registration conflict but no existing device found');
+    user = { id: existing.id };
+  }
 
   await Promise.all([
     AsyncStorage.setItem(KEYS.userId, String(user.id)),
@@ -146,9 +170,15 @@ export async function updateTokenPush(
   tokenPush: string,
   accessToken: string | null,
 ): Promise<void> {
+  const versionApp = Constants.expoConfig?.version ?? undefined;
+  const modeloDispositivo = Device.modelName ?? undefined;
+  const sistemaOperativo = Device.osVersion
+    ? `${Platform.OS === 'android' ? 'Android' : 'iOS'} ${Device.osVersion}`
+    : undefined;
+
   await apiRequest(`/usuarios/${userId}`, {
     method: 'PATCH',
-    body: { tokenPush },
+    body: { tokenPush, versionApp, modeloDispositivo, sistemaOperativo },
     headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
   });
   await AsyncStorage.setItem(KEYS.tokenPush, tokenPush);

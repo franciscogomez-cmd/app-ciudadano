@@ -27,6 +27,13 @@ const buildUrl = (path: string, query?: QueryParams) => {
   return url.toString();
 };
 
+export class ApiError extends Error {
+  constructor(public readonly status: number, message: string) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
+
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const response = await fetch(buildUrl(path, options.query), {
     method: options.method ?? 'GET',
@@ -39,7 +46,7 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   });
 
   if (!response.ok) {
-    throw new Error(`API request failed with status ${response.status}`);
+    throw new ApiError(response.status, `API request failed with status ${response.status}`);
   }
 
   return (await response.json()) as T;

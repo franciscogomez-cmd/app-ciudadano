@@ -33,6 +33,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
   const userIdRef = useRef<number | null>(null);
   const accessTokenRef = useRef<string | null>(null);
+  const knownSubscriptionIdRef = useRef<string | null>(null);
   const isRegisteringRef = useRef(false);
 
   useEffect(() => {
@@ -48,11 +49,28 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     };
 
     const handleSubscriptionChange = (state: PushSubscriptionChangedState) => {
+      console.log('[Notifications] subscriptionChange ->', {
+        id: state.current.id,
+        optedIn: state.current.optedIn,
+        userIdRef: userIdRef.current,
+        knownSubscriptionId: knownSubscriptionIdRef.current,
+      });
+
       if (state.current.id && !state.current.optedIn) {
+        console.log('[Notifications] SDK reportó optedOut — forzando optIn()...');
         OneSignal.User.pushSubscription.optIn();
       }
+
       if (state.current.id && !userIdRef.current) {
+        // Usuario sin registro previo — registrar
         void doRegisterWithSubscription();
+      } else if (state.current.id && userIdRef.current && state.current.id !== knownSubscriptionIdRef.current) {
+        // Usuario registrado con nuevo subscriptionId (re-suscripción tras unsubscribe) — actualizar backend
+        console.log('[Notifications] Nuevo subscriptionId para usuario registrado — actualizando token en backend...');
+        knownSubscriptionIdRef.current = state.current.id;
+        void updateTokenPush(userIdRef.current, state.current.id, accessTokenRef.current)
+          .then(() => console.log('[Notifications] Token actualizado en backend tras re-suscripción'))
+          .catch(() => console.log('[Notifications] Error actualizando token tras re-suscripción (no crítico)'));
       }
     };
 
@@ -77,14 +95,23 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       console.log('[Notifications] AsyncStorage ->', { userId, storedTokenPush, storedNotifActivas, hasAccessToken: !!accessToken });
 
       let resolvedUserId = userId;
+      let userWasDeleted = false;
       if (userId) {
+        console.log('[Notifications] Validando userId', userId, 'contra backend...');
         const profile = await fetchUserProfile(userId);
-        if (!profile) {
-          console.log('[Notifications] Usuario', userId, 'no existe en backend — limpiando storage');
+        if (profile) {
+          console.log('[Notifications] Usuario', userId, 'confirmado en backend');
+        } else {
+          console.log('[Notifications] Usuario', userId, 'NO existe en backend (eliminado) — limpiando storage');
           await clearStoredUser();
           resolvedUserId = null;
+          userWasDeleted = true;
         }
+      } else {
+        console.log('[Notifications] Sin userId en storage — usuario nuevo o nunca registrado');
       }
+
+      console.log('[Notifications] resolvedUserId ->', resolvedUserId, '| userWasDeleted ->', userWasDeleted);
 
       userIdRef.current = resolvedUserId;
       accessTokenRef.current = resolvedUserId ? accessToken : null;
@@ -103,23 +130,33 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       // llamamos requestPermission para obtenerlo o confirmarlo.
       // En Android, si ya fue concedido retorna true sin mostrar diálogo.
       let actualPermission = hasPermission;
-      if (!hasPermission && resolvedUserId) {
-        console.log('[Notifications] Solicitando confirmación de permiso Android...');
+      if (!hasPermission && (resolvedUserId || userWasDeleted)) {
+        console.log('[Notifications] Permiso no detectado pero dispositivo tenía cuenta — solicitando confirmación...');
         actualPermission = await OneSignal.Notifications.requestPermission(true);
-        console.log('[Notifications] actualPermission ->', actualPermission);
+        console.log('[Notifications] actualPermission tras solicitud ->', actualPermission);
+      } else if (hasPermission) {
+        console.log('[Notifications] Permiso ya otorgado por OS');
+      } else {
+        console.log('[Notifications] Sin permiso y sin cuenta previa — esperando acción del usuario');
       }
+
+      console.log('[Notifications] Estado final -> resolvedUserId:', resolvedUserId, '| actualPermission:', actualPermission, '| userWasDeleted:', userWasDeleted);
 
       setIsPermissionGranted(actualPermission);
       setIsRegistered(resolvedUserId !== null);
       setNotifActivas(resolvedUserId !== null && storedNotifActivas && actualPermission);
 
+      if (subscriptionId) {
+        knownSubscriptionIdRef.current = subscriptionId;
+      }
+
       if (actualPermission) {
         const optedIn = await OneSignal.User.pushSubscription.getOptedInAsync();
-        console.log('[Notifications] optedIn ->', optedIn);
-        if (!optedIn) {
-          console.log('[Notifications] Forzando optIn()...');
-          OneSignal.User.pushSubscription.optIn();
-        }
+        console.log('[Notifications] optedIn (local) ->', optedIn);
+        // Siempre llamamos optIn() para sincronizar con los servidores de OneSignal.
+        // El estado local puede reportar true aunque el servidor lo tenga como unsubscribed.
+        OneSignal.User.pushSubscription.optIn();
+        console.log('[Notifications] optIn() enviado a OneSignal');
         const token = await OneSignal.User.pushSubscription.getTokenAsync();
         console.log('[Notifications] FCM token ->', token ? `${token.slice(0, 20)}...` : 'NULL');
       }
@@ -134,12 +171,14 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         console.log('[Notifications] Ya registrado, verificando si el token cambió...');
         if (storedTokenPush && subscriptionId !== storedTokenPush) {
           try {
-            await updateTokenPush(resolvedUserId, subscriptionId, resolvedUserId ? accessToken : null);
+            await updateTokenPush(resolvedUserId, subscriptionId, accessToken);
             console.log('[Notifications] Token actualizado en backend');
           } catch {
             console.log('[Notifications] Error actualizando token (no crítico)');
           }
         }
+      } else if (resolvedUserId && !subscriptionId && actualPermission) {
+        console.log('[Notifications] Usuario registrado sin subscriptionId — OneSignal unsubscribed. Esperando nuevo ID tras optIn()...');
       } else {
         console.log('[Notifications] Sin permiso y sin registro — esperando acción del usuario');
       }
@@ -174,6 +213,10 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       accessTokenRef.current = accessToken;
       setIsRegistered(true);
       setNotifActivas(true);
+      // Forzar opt-in en servidores de OneSignal — la suscripción puede quedar
+      // en estado inactivo si fue creada tras eliminar la anterior del dashboard.
+      OneSignal.User.pushSubscription.optIn();
+      console.log('[Notifications] optIn() forzado tras registro exitoso');
     } catch (error) {
       console.log('[Notifications] Error en registro ->', error);
     } finally {
