@@ -8,6 +8,7 @@ import {
   type AppStateStatus,
   Image,
   Linking,
+  Modal,
   Pressable,
   Text,
   View,
@@ -24,6 +25,7 @@ import {
 } from "@/components/icons";
 import { useAppConfig } from "@/context/AppConfigContext";
 import {
+  getStoredUbicacionGuardada,
   getStoredUserId,
   updateUserLocation,
 } from "@/services/users/UserService";
@@ -235,12 +237,108 @@ function LocationCard({
   );
 }
 
+function ConfirmLocationModal({
+  visible,
+  onCancel,
+  onConfirm,
+}: {
+  visible: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  const palette = useAlertsPalette();
+
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={onCancel}
+    >
+      <View
+        className="flex-1 items-center justify-center px-6"
+        style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+      >
+        <View
+          className="w-full rounded-[20px] p-6 gap-5"
+          style={{ backgroundColor: palette.cardBackground }}
+        >
+          {/* Encabezado */}
+          <View className="flex-row items-center gap-3">
+            <Ionicons name="location" size={24} color={palette.actionBackground} />
+            <Text
+              className="font-ubuntu-bold text-[18px] leading-[22px]"
+              style={{ color: palette.text }}
+            >
+              Actualizar ubicación
+            </Text>
+          </View>
+
+          {/* Descripción */}
+          <Text
+            className="font-ubuntu-medium text-[14px] leading-[20px]"
+            style={{ color: palette.text }}
+          >
+            Tu ubicación de alertas será reemplazada por tu posición actual.
+          </Text>
+
+          {/* Detalle informativo */}
+          <View
+            className="rounded-[12px] p-4 gap-3"
+            style={{ backgroundColor: palette.shellBackground }}
+          >
+            <View className="flex-row items-start gap-2">
+              <Ionicons name="notifications" size={16} color={palette.actionBackground} style={{ marginTop: 2 }} />
+              <Text
+                className="font-ubuntu-medium text-[13px] leading-[18px] flex-1"
+                style={{ color: palette.subtleText }}
+              >
+                Recibirás alertas correspondientes a tu nueva ubicación.
+              </Text>
+            </View>
+            <View className="flex-row items-start gap-2">
+              <Ionicons name="information-circle" size={16} color={palette.actionBackground} style={{ marginTop: 2 }} />
+              <Text
+                className="font-ubuntu-medium text-[13px] leading-[18px] flex-1"
+                style={{ color: palette.subtleText }}
+              >
+                Si estás fuera de tu ciudad de origen, dejarás de recibir las alertas habituales de esa zona.
+              </Text>
+            </View>
+          </View>
+
+          {/* Acciones */}
+          <View className="flex-row gap-3">
+            <View className="flex-1">
+              <ActionButton
+                label="Cancelar"
+                backgroundColor={palette.shellBackground}
+                textColor={palette.subtleText}
+                onPress={onCancel}
+              />
+            </View>
+            <View className="flex-1">
+              <ActionButton
+                label="Actualizar"
+                backgroundColor={palette.actionBackground}
+                textColor={palette.actionText}
+                onPress={onConfirm}
+              />
+            </View>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
 export function AlertsLandingPage() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const palette = useAlertsPalette();
   const { activeTheme } = useAppConfig();
   const [locationStatus, setLocationStatus] = useState<LocationStatus>("checking");
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const appState = useRef(AppState.currentState);
 
   // Intenta guardar la ubicación en el backend. Actualiza el estado según resultado.
@@ -272,8 +370,16 @@ export function AlertsLandingPage() {
   }, []);
 
   // Verifica permisos y lanza el flujo correcto según el estado del OS.
+  // Solo intenta guardar si el backend aún no tiene coordenadas.
   const checkAndSync = useCallback(async () => {
     setLocationStatus("checking");
+
+    const ubicacionGuardada = await getStoredUbicacionGuardada();
+    if (ubicacionGuardada) {
+      setLocationStatus("success");
+      return;
+    }
+
     const { status, canAskAgain } = await Location.getForegroundPermissionsAsync();
 
     if (status === "granted") {
@@ -395,7 +501,7 @@ export function AlertsLandingPage() {
             status={locationStatus}
             onActivar={handleActivar}
             onReintentar={attemptSave}
-            onActualizar={attemptSave}
+            onActualizar={() => setShowConfirmModal(true)}
           />
         </View>
       </View>
@@ -435,6 +541,15 @@ export function AlertsLandingPage() {
           </Pressable>
         </View>
       </View>
+
+      <ConfirmLocationModal
+        visible={showConfirmModal}
+        onCancel={() => setShowConfirmModal(false)}
+        onConfirm={() => {
+          setShowConfirmModal(false);
+          void attemptSave();
+        }}
+      />
     </View>
   );
 }

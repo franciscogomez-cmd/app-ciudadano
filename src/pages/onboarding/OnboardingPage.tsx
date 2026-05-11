@@ -31,6 +31,7 @@ import {
     NotificacionesIcon,
 } from "@/components/icons";
 import { useAppConfig } from "@/context/AppConfigContext";
+import { setStoredTutorialCompletado } from "@/services/users/UserService";
 
 type OnboardingSlide = {
   renderIcon: (size: number) => React.ReactNode;
@@ -350,7 +351,9 @@ export function OnboardingPage() {
                   direction="forward"
                   onPress={() => {
                     if (index === slides.length - 1) {
-                      router.replace("/alertas");
+                      void setStoredTutorialCompletado().then(() => {
+                        router.replace("/alertas");
+                      });
                       return;
                     }
 
