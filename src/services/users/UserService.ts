@@ -18,6 +18,8 @@ const KEYS = {
   accessToken: '@alertamientos/accessToken',
   tokenPush: '@alertamientos/tokenPush',
   notifActivas: '@alertamientos/notifActivas',
+  tutorialCompletado: '@alertamientos/tutorialCompletado',
+  ubicacionGuardada: '@alertamientos/ubicacionGuardada',
 } as const;
 
 function generateUuid(): string {
@@ -184,6 +186,11 @@ export async function updateTokenPush(
   await AsyncStorage.setItem(KEYS.tokenPush, tokenPush);
 }
 
+export async function getStoredUbicacionGuardada(): Promise<boolean> {
+  const v = await AsyncStorage.getItem(KEYS.ubicacionGuardada);
+  return v === 'true';
+}
+
 export async function updateUserLocation(
   userId: number,
   latitud: number,
@@ -193,6 +200,16 @@ export async function updateUserLocation(
     method: 'PATCH',
     body: { latitud, longitud },
   });
+  await AsyncStorage.setItem(KEYS.ubicacionGuardada, 'true');
+}
+
+export async function getStoredTutorialCompletado(): Promise<boolean> {
+  const v = await AsyncStorage.getItem(KEYS.tutorialCompletado);
+  return v === 'true';
+}
+
+export async function setStoredTutorialCompletado(): Promise<void> {
+  await AsyncStorage.setItem(KEYS.tutorialCompletado, 'true');
 }
 
 export async function updatePreferences(
