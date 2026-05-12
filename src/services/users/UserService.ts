@@ -38,6 +38,7 @@ export type UserProfile = {
   ubicacionActualizadaEn: string | null;
   notifActivas: boolean;
   severidadMinima: SeveridadMinima;
+  tokenPushValido?: boolean;
 };
 
 export type DeviceProfile = {
