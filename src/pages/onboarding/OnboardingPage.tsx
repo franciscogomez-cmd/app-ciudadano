@@ -31,6 +31,7 @@ import {
     NotificacionesIcon,
 } from "@/components/icons";
 import { useAppConfig } from "@/context/AppConfigContext";
+import { useNotifications } from "@/context/NotificationContext";
 import { setStoredTutorialCompletado } from "@/services/users/UserService";
 
 type OnboardingSlide = {
@@ -39,6 +40,7 @@ type OnboardingSlide = {
   route?: Href;
   body: React.ReactNode;
   ctaLabel?: string;
+  onCtaPress?: () => void;
 };
 
 function OnboardingCopy({ children }: { children: React.ReactNode }) {
@@ -147,6 +149,8 @@ export function OnboardingPage() {
   const router = useRouter();
   const { activeTheme } = useAppConfig();
   const palette = useAlertsPalette();
+  const { isPermissionGranted, isRegistered, toggleNotifications } = useNotifications();
+  const [notifRequested, setNotifRequested] = useState(false);
   const listRef = useRef<FlatList<OnboardingSlide> | null>(null);
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -261,6 +265,17 @@ export function OnboardingPage() {
             situacion relevante cerca de tu ubicacion.
           </OnboardingCopy>
         ),
+        ctaLabel:
+          isPermissionGranted && isRegistered
+            ? "Notificaciones activas"
+            : notifRequested
+              ? "Activando..."
+              : "Activar notificaciones",
+        onCtaPress: () => {
+          if (isPermissionGranted && isRegistered) return;
+          setNotifRequested(true);
+          void toggleNotifications(true);
+        },
       },
       {
         renderIcon: (s: number) => (
@@ -277,7 +292,7 @@ export function OnboardingPage() {
         ),
       },
     ],
-    [palette],
+    [palette, isPermissionGranted, isRegistered, notifRequested, toggleNotifications],
   );
 
   const goToIndex = (nextIndex: number) => {
@@ -383,7 +398,7 @@ export function OnboardingPage() {
                   <TouchableOpacity
                     accessibilityRole="button"
                     activeOpacity={0.85}
-                    onPress={() => router.replace(item.route ?? "/alertas")}
+                    onPress={item.onCtaPress ?? (() => router.replace(item.route ?? "/alertas"))}
                     className="mb-6 w-full items-center justify-center overflow-hidden rounded-lg px-3 py-[14px]"
                     style={{
                       backgroundColor: palette.actionBackground,

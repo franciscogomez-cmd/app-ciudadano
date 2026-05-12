@@ -96,11 +96,16 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
       let resolvedUserId = userId;
       let userWasDeleted = false;
+      let tokenInvalido = false;
       if (userId) {
         console.log('[Notifications] Validando userId', userId, 'contra backend...');
         const profile = await fetchUserProfile(userId);
         if (profile) {
           console.log('[Notifications] Usuario', userId, 'confirmado en backend');
+          tokenInvalido = profile.tokenPushValido === false;
+          if (tokenInvalido) {
+            console.log('[Notifications] Backend reportó tokenPushValido=false — se forzará re-suscripción');
+          }
         } else {
           console.log('[Notifications] Usuario', userId, 'NO existe en backend (eliminado) — limpiando storage');
           await clearStoredUser();
@@ -153,8 +158,13 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       if (actualPermission) {
         const optedIn = await OneSignal.User.pushSubscription.getOptedInAsync();
         console.log('[Notifications] optedIn (local) ->', optedIn);
-        // Siempre llamamos optIn() para sincronizar con los servidores de OneSignal.
-        // El estado local puede reportar true aunque el servidor lo tenga como unsubscribed.
+        if (tokenInvalido) {
+          // El backend confirmó que el token no existe en OneSignal.
+          // Ciclamos optOut → optIn para forzar una nueva suscripción con nuevo ID.
+          // El evento subscriptionChange detectará el nuevo ID y actualizará el backend.
+          console.log('[Notifications] Forzando ciclo optOut → optIn por token inválido...');
+          OneSignal.User.pushSubscription.optOut();
+        }
         OneSignal.User.pushSubscription.optIn();
         console.log('[Notifications] optIn() enviado a OneSignal');
         const token = await OneSignal.User.pushSubscription.getTokenAsync();
