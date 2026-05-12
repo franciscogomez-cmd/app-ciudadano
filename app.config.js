@@ -46,6 +46,7 @@ module.exports = ({ config }) => ({
         },
       },
     ],
+    'expo-secure-store',
     './plugins/WithFollyHeaderPathFix',
     'expo-router',
     [

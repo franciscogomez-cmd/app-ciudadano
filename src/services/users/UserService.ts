@@ -1,6 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Application from 'expo-application';
 import Constants from 'expo-constants';
 import * as Device from 'expo-device';
+import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 
 import { ApiError, apiRequest } from '@/services/core/ApiClient';
@@ -88,12 +90,40 @@ export async function getUserByDevice(deviceId: string): Promise<DeviceProfile |
 }
 
 export async function getOrCreateDeviceId(): Promise<string> {
-  let id = await AsyncStorage.getItem(KEYS.deviceId);
-  if (!id) {
-    id = generateUuid();
-    await AsyncStorage.setItem(KEYS.deviceId, id);
+  if (Platform.OS === 'android') {
+    // getAndroidId() es estable entre reinstalaciones (cambia solo en factory reset).
+    // Puede ser null en emuladores o perfiles de trabajo gestionados.
+    const androidId = await Application.getAndroidId();
+    if (androidId) return androidId;
+    // Fallback: UUID generado, guardado en AsyncStorage (no persiste en reinstalación,
+    // pero es el mejor recurso disponible cuando androidId no está).
+    console.log('[UserService] androidId no disponible — usando UUID en AsyncStorage como fallback');
+    let id = await AsyncStorage.getItem(KEYS.deviceId);
+    if (!id) {
+      id = generateUuid();
+      await AsyncStorage.setItem(KEYS.deviceId, id);
+    }
+    return id;
   }
-  return id;
+
+  // iOS: Keychain (SecureStore) sobrevive desinstalaciones.
+  try {
+    let id = await SecureStore.getItemAsync(KEYS.deviceId);
+    if (!id) {
+      id = generateUuid();
+      await SecureStore.setItemAsync(KEYS.deviceId, id);
+    }
+    return id;
+  } catch {
+    // SecureStore no disponible (simulador sin Keychain configurado u otro error).
+    console.log('[UserService] SecureStore falló — usando AsyncStorage como fallback (no persiste en reinstalación)');
+    let id = await AsyncStorage.getItem(KEYS.deviceId);
+    if (!id) {
+      id = generateUuid();
+      await AsyncStorage.setItem(KEYS.deviceId, id);
+    }
+    return id;
+  }
 }
 
 export async function getStoredUserId(): Promise<number | null> {
