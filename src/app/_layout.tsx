@@ -101,6 +101,7 @@ function RootNavigator() {
         }}
       >
         <Stack.Screen name="index" />
+        <Stack.Screen name="tutorial" />
         <Stack.Screen name="alertas" />
       </Stack>
     </>
