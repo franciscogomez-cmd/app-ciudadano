@@ -529,7 +529,7 @@ export function AlertsLandingPage() {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Ver onboarding"
-            onPress={() => router.push("/")}
+            onPress={() => router.push("/tutorial")}
             className="flex-1 items-center justify-center rounded-full"
             style={({ pressed }) => ({ opacity: pressed ? 0.88 : 1 })}
           >
