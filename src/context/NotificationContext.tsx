@@ -35,9 +35,6 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const accessTokenRef = useRef<string | null>(null);
   const knownSubscriptionIdRef = useRef<string | null>(null);
   const isRegisteringRef = useRef(false);
-  // true mientras estamos esperando el subscriptionChange tras un optOut por tokenInvalido.
-  // Permite forzar el PATCH aunque el subscriptionId no haya cambiado.
-  const tokenInvalidoRef = useRef(false);
 
   useEffect(() => {
     void initialize();
@@ -71,14 +68,10 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         state.current.id &&
         userIdRef.current &&
         state.current.optedIn &&
-        (state.current.id !== knownSubscriptionIdRef.current || tokenInvalidoRef.current)
+        state.current.id !== knownSubscriptionIdRef.current
       ) {
-        // Usuario registrado: subscriptionId cambió, O el backend tenía el token como inválido
-        // y necesitamos forzar el PATCH aunque el ID sea el mismo.
         // Guard optedIn=true evita un PATCH prematuro en el evento intermedio de optOut.
-        const motivo = tokenInvalidoRef.current ? 'token inválido confirmado' : 'nuevo subscriptionId';
-        console.log(`[Notifications] Actualizando token en backend (${motivo})...`);
-        tokenInvalidoRef.current = false;
+        console.log('[Notifications] Actualizando token en backend (nuevo subscriptionId)...');
         knownSubscriptionIdRef.current = state.current.id;
         void updateTokenPush(userIdRef.current, state.current.id, accessTokenRef.current)
           .then(() => console.log('[Notifications] Token actualizado en backend'))
@@ -108,16 +101,11 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
       let resolvedUserId = userId;
       let userWasDeleted = false;
-      let tokenInvalido = false;
       if (userId) {
         console.log('[Notifications] Validando userId', userId, 'contra backend...');
         const profile = await fetchUserProfile(userId);
         if (profile) {
           console.log('[Notifications] Usuario', userId, 'confirmado en backend');
-          tokenInvalido = profile.tokenPushValido === false;
-          if (tokenInvalido) {
-            console.log('[Notifications] Backend reportó tokenPushValido=false — se forzará re-suscripción');
-          }
         } else {
           console.log('[Notifications] Usuario', userId, 'NO existe en backend (eliminado) — limpiando storage');
           await clearStoredUser();
@@ -170,18 +158,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       if (actualPermission) {
         const optedIn = await OneSignal.User.pushSubscription.getOptedInAsync();
         console.log('[Notifications] optedIn (local) ->', optedIn);
-        if (tokenInvalido) {
-          // Backend confirmó que el token no existe en OneSignal.
-          // Marcamos el flag para que handleSubscriptionChange fuerce el PATCH aunque el ID no cambie.
-          // Llamamos solo optOut(); el handler detectará optedIn=false y llamará optIn(),
-          // evitando la carrera que ocurría al llamar ambos en el mismo tick.
-          console.log('[Notifications] Forzando optOut() por token inválido — optIn() diferido al evento subscriptionChange...');
-          tokenInvalidoRef.current = true;
-          OneSignal.User.pushSubscription.optOut();
-        } else {
-          OneSignal.User.pushSubscription.optIn();
-          console.log('[Notifications] optIn() enviado a OneSignal');
-        }
+        OneSignal.User.pushSubscription.optIn();
+        console.log('[Notifications] optIn() enviado a OneSignal');
         const token = await OneSignal.User.pushSubscription.getTokenAsync();
         console.log('[Notifications] FCM token ->', token ? `${token.slice(0, 20)}...` : 'NULL');
       }
