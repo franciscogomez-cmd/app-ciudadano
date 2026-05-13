@@ -44,7 +44,9 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       setIsPermissionGranted(granted);
       if (granted) {
         OneSignal.User.pushSubscription.optIn();
-        if (!userIdRef.current) void doRegisterWithSubscription();
+        setTimeout(() => {
+          if (!userIdRef.current) void doRegisterWithSubscription();
+        }, 2000);
       }
     };
 
@@ -56,13 +58,14 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         knownSubscriptionId: knownSubscriptionIdRef.current,
       });
 
-      if (state.current.id && !state.current.optedIn) {
-        console.log('[Notifications] SDK reportó optedOut — forzando optIn()...');
-        OneSignal.User.pushSubscription.optIn();
+      if (!state.current.id) return;
+
+      if (!state.current.optedIn) {
+        console.log('[Notifications] SDK reportó optedOut — ignorando, optIn() solo desde initialize()');
+        return;
       }
 
-      if (state.current.id && !userIdRef.current) {
-        // Usuario sin registro previo — registrar
+      if (!userIdRef.current) {
         void doRegisterWithSubscription();
       } else if (
         state.current.id &&
@@ -70,7 +73,6 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         state.current.optedIn &&
         state.current.id !== knownSubscriptionIdRef.current
       ) {
-        // Guard optedIn=true evita un PATCH prematuro en el evento intermedio de optOut.
         console.log('[Notifications] Actualizando token en backend (nuevo subscriptionId)...');
         knownSubscriptionIdRef.current = state.current.id;
         void updateTokenPush(userIdRef.current, state.current.id, accessTokenRef.current)
@@ -121,8 +123,6 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       userIdRef.current = resolvedUserId;
       accessTokenRef.current = resolvedUserId ? accessToken : null;
 
-      // Consultamos ambos en paralelo — subscriptionId es la fuente de verdad:
-      // si OneSignal ya tiene ID, el usuario tiene permiso y está suscrito.
       const [hasPermission, subscriptionId] = await Promise.all([
         OneSignal.Notifications.getPermissionAsync(),
         OneSignal.User.pushSubscription.getIdAsync(),
@@ -131,9 +131,6 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       console.log('[Notifications] hasPermission ->', hasPermission);
       console.log('[Notifications] subscriptionId ->', subscriptionId);
 
-      // Si el usuario ya está registrado pero Android no confirma el permiso,
-      // llamamos requestPermission para obtenerlo o confirmarlo.
-      // En Android, si ya fue concedido retorna true sin mostrar diálogo.
       let actualPermission = hasPermission;
       if (!hasPermission && (resolvedUserId || userWasDeleted)) {
         console.log('[Notifications] Permiso no detectado pero dispositivo tenía cuenta — solicitando confirmación...');
@@ -191,8 +188,6 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     }
   }
 
-  // Registra usando el subscriptionId de OneSignal. Si aún no está disponible,
-  // espera el evento 'change' de la suscripción (máx 10 s).
   async function doRegisterWithSubscription(): Promise<void> {
     if (isRegisteringRef.current || userIdRef.current) {
       console.log('[Notifications] doRegisterWithSubscription() bloqueado - ya registrando o ya tiene userId');
@@ -216,8 +211,6 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       accessTokenRef.current = accessToken;
       setIsRegistered(true);
       setNotifActivas(true);
-      // Forzar opt-in en servidores de OneSignal — la suscripción puede quedar
-      // en estado inactivo si fue creada tras eliminar la anterior del dashboard.
       OneSignal.User.pushSubscription.optIn();
       console.log('[Notifications] optIn() forzado tras registro exitoso');
     } catch (error) {
@@ -230,21 +223,29 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
   async function getSubscriptionId(): Promise<string | null> {
     const id = await OneSignal.User.pushSubscription.getIdAsync();
-    if (id) return Promise.resolve(id);
+    if (id) return id;
 
-    // El SDK puede tardar unos instantes en asignar el subscriptionId
     return new Promise((resolve) => {
-      const timeout = setTimeout(() => {
+      let resolved = false;
+
+      const finish = (id: string | null) => {
+        if (resolved) return;
+        resolved = true;
+        clearInterval(interval);
+        clearTimeout(timeout);
         OneSignal.User.pushSubscription.removeEventListener('change', handler);
-        resolve(null);
-      }, 10_000);
+        resolve(id);
+      };
+
+      const interval = setInterval(async () => {
+        const current = await OneSignal.User.pushSubscription.getIdAsync();
+        if (current) finish(current);
+      }, 500);
+
+      const timeout = setTimeout(() => finish(null), 15_000);
 
       const handler = (state: PushSubscriptionChangedState) => {
-        if (state.current.id) {
-          clearTimeout(timeout);
-          OneSignal.User.pushSubscription.removeEventListener('change', handler);
-          resolve(state.current.id);
-        }
+        if (state.current.id) finish(state.current.id);
       };
 
       OneSignal.User.pushSubscription.addEventListener('change', handler);
@@ -274,15 +275,11 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
       let permissionOk = isPermissionGranted;
       if (!permissionOk) {
-        // Intentar obtener permiso antes de mandar al usuario a Settings.
-        // En Android <13 requestPermission() devuelve true sin diálogo.
-        // En Android 13+ / iOS muestra el diálogo si canAskAgain=true.
         const granted = await OneSignal.Notifications.requestPermission(true);
         setIsPermissionGranted(granted);
         permissionOk = granted;
 
         if (!granted) {
-          // Ya no puede mostrar diálogo → única opción es Settings
           openSystemSettings();
           return;
         }
