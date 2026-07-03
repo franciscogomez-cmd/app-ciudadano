@@ -3,8 +3,8 @@
     "name": "Ciudadano",
     "slug": "app-ciudadano",
     "scheme": "appciudadano",
-    "androidPackage": "com.sg.ciudadano",
-    "iosBundleIdentifier": "com.sg.ciudadano",
+    "androidPackage": "com.nay.digital",
+    "iosBundleIdentifier": "com.nay.digital",
     "version": "1.0.0",
     "orientation": "portrait"
   },
